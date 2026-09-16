@@ -81,4 +81,4 @@
   #
   # ACPI Tables
   #
-  sapphire/AcpiTables.inf
+  tapas/AcpiTables.inf
