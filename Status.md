@@ -4773,7 +4773,7 @@
 <img align="right" src="Resources/Pictures/Xiaomi-Redmi-Note-12.png" width="500" alt="Preview">
 
 **State:** Active <br>
-**Codename:** tapas
+**Codename:** sapphire
 
 **Contributors:** [Statzar](https://github.com/Statzar/), [6adp](https://github.com/6adp/)
 
@@ -4893,6 +4893,7 @@
 <img align="right" src="Resources/Pictures/Xiaomi-Mi-A3.png" width="500" alt="Preview">
 
 **State:** Inactive <br>
+
 **Codename:** laurel_sprout
 
 **Contributors:** [Kernel357](https://github.com/Kernel357/)
