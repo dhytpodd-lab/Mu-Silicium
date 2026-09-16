@@ -15,8 +15,7 @@
 	branch = release/202511
 [submodule "Silicium-ACPI"]
 	path = Silicium-ACPI
-	url = https://github.com/dhytpodd-lab/Silicium-ACPI.git
-    branch = main
+	url = https://github.com/Project-Silicium/Silicium-ACPI.git
 [submodule "Silicon/Silicium/OpensslPkg/Library/OpensslLib/openssl"]
 	path = Silicon/Silicium/OpensslPkg/Library/OpensslLib/openssl
 	url = https://github.com/openssl/openssl.git
