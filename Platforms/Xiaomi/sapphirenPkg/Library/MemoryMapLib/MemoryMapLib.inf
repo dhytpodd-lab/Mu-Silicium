@@ -1,0 +1,20 @@
+##
+#  Copyright (c) 2018, Linaro Limited. All rights reserved.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MemoryMapLib
+  FILE_GUID                      = B9471C6A-01A8-4CE5-BE4E-52BFA035ADDD
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MemoryMapLib
+
+[Sources]
+  MemoryMapLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Silicon/Silicium/SiliciumPkg/SiliciumPkg.dec
