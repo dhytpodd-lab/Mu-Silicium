@@ -48,6 +48,7 @@ done
 # Set Build Environment
 export EDK_TOOLS_PATH="$(pwd)/Mu_Basecore/BaseTools"
 export CLANGPDB_AARCH64_PREFIX=aarch64-linux-gnu-
+chmod -R +x Mu_Basecore/BaseTools/BinWrappers/PosixLike/
 
 # Parse Active Devices from Status.md
 ACTIVE_DEVICES=$(grep -A 2 "\*\*State:\*\* Active" Status.md | grep "\*\*Codename:\*\*" | sed 's/.*\*\*Codename:\*\* //; s/<[^>]*>//g')
