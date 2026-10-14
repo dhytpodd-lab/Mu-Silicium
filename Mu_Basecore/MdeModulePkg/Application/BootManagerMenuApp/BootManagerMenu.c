@@ -1031,6 +1031,8 @@ BootManagerMenuEntry (
   EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL  *SimpleTextOut;
   UINTN                            BootTextColumn;
   UINTN                            BootTextRow;
+  EFI_HANDLE                       *StorageHandles;
+  UINTN                            StorageHandleCount;
 
   //
   // Set Logo status invalid when boot manager menu is launched
@@ -1053,10 +1055,26 @@ BootManagerMenuEntry (
   ASSERT (gStringPackHandle != NULL);
 
   //
-  // Connect all prior to entering the platform setup menu.
+  // Connect storage devices only to mount boot filesystems
+  // without hanging on uninitialized/broken peripheral controllers.
   //
-  DEBUG ((EFI_D_WARN, "[BMM] 1. ConnectAll starting...\n"));
-  EfiBootManagerConnectAll ();
+  DEBUG ((EFI_D_WARN, "[BMM] 1. Connecting BlockIo storage...\n"));
+  StorageHandles     = NULL;
+  StorageHandleCount = 0;
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiBlockIoProtocolGuid,
+                  NULL,
+                  &StorageHandleCount,
+                  &StorageHandles
+                  );
+  if (!EFI_ERROR (Status) && (StorageHandles != NULL)) {
+    for (Index = 0; Index < StorageHandleCount; Index++) {
+      gBS->ConnectController (StorageHandles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (StorageHandles);
+  }
+
   DEBUG ((EFI_D_WARN, "[BMM] 2. RefreshAllBootOption...\n"));
   EfiBootManagerRefreshAllBootOption ();
 
@@ -1110,8 +1128,8 @@ BootManagerMenuEntry (
     //
     mSetupHorizontalResolution = (mBootHorizontalResolution != 0) ? mBootHorizontalResolution : PcdGet32 (PcdSetupVideoHorizontalResolution);
     mSetupVerticalResolution   = (mBootVerticalResolution != 0) ? mBootVerticalResolution : PcdGet32 (PcdSetupVideoVerticalResolution);
-    mSetupTextModeColumn       = PcdGet32 (PcdSetupConOutColumn);
-    mSetupTextModeRow          = PcdGet32 (PcdSetupConOutRow);
+    mSetupTextModeColumn       = (mBootTextModeColumn != 0) ? mBootTextModeColumn : PcdGet32 (PcdSetupConOutColumn);
+    mSetupTextModeRow          = (mBootTextModeRow != 0) ? mBootTextModeRow : PcdGet32 (PcdSetupConOutRow);
     mModeInitialized           = TRUE;
   }
 

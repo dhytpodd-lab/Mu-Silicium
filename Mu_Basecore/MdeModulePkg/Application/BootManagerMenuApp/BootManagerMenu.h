@@ -20,6 +20,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DevicePathLib.h>
 #include <Protocol/LoadedImage.h>
 #include <Protocol/BootLogo.h>
+#include <Protocol/BlockIo.h>
 
 #define TITLE_TOKEN_COUNT  1
 #define HELP_TOKEN_COUNT   3
