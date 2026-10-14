@@ -106,7 +106,7 @@
 
 <img align="right" src="Resources/Pictures/Samsung-Galaxy-S20-5G.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** x1s
 
 **Contributors:** [halal-beef](https://github.com/halal-beef/)
@@ -274,7 +274,7 @@
 
 <img align="right" src="Resources/Pictures/Samsung-Galaxy-S9.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** starlte
 
 **Contributors:** [Robotix](https://github.com/Robotix22/)
@@ -642,7 +642,7 @@
 
 <img align="right" src="Resources/Pictures/OnePlus-15.png" width="400" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** infiniti
 
 **Contributors:** [Robotix](https://github.com/Robotix22/), [FantomTchi7](https://github.com/FantomTchi7)
@@ -723,7 +723,7 @@
 
 <img align="right" src="Resources/Pictures/OnePlus-15R.png" width="400" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** macan
 
 **Contributors:** [Robotix](https://github.com/Robotix22/), [Nikka](https://github.com/NikkaGames)
@@ -836,7 +836,7 @@
 
 <img align="right" src="Resources/Pictures/OnePlus-13s.png" width="550" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** pagani
 
 **Contributors:** [renhiyama](https://github.com/renhiyama/), [Robotix](https://github.com/Robotix22/), [N1kroks](https://github.com/N1kroks/)
@@ -928,7 +928,7 @@
 
 <img align="right" src="Resources/Pictures/OnePlus-13R.png" width="400" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** giulia <br>
 **Models:** 2
 
@@ -1166,7 +1166,7 @@
 
 <img align="right" src="Resources/Pictures/Samsung-Galaxy-Flip5.png" width="400" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** b5q
 
 **Contributors:** [Robotix](https://github.com/Robotix22/)
@@ -1240,7 +1240,7 @@
 
 <img align="right" src="Resources/Pictures/Samsung-Galaxy-S23+.png" width="400" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** dm2q
 
 **Contributors:** [Violet](https://github.com/ghatt-o/), [Robotix](https://github.com/Robotix22/)
@@ -1303,7 +1303,7 @@
 
 <img align="right" src="Resources/Pictures/Samsung-Galaxy-Tab-S9-Wi-Fi.png" width="330" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** gts9wifi
 
 **Contributors:** [nacht20-de](https://github.com/nacht20-de)
@@ -1464,7 +1464,7 @@
 
 ## Qualcomm Technologies, Inc. QRD8550
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** qrd8550 <br>
 
 **Contributors:** [arminask](https://github.com/arminask/), [map220v](https://github.com/map220v/)
@@ -1790,7 +1790,7 @@
 
 <img align="right" src="Resources/Pictures/Realme-GT-Neo5.png" width="400" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** senna_bc <br>
 **Models:** 3
 
@@ -1814,7 +1814,7 @@
 
 <img align="right" src="Resources/Pictures/Realme-GT-Neo5-SE.png" width="400" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** senna_a <br>
 
 **Contributors:** [v1-727](https://github.com/v1-727/), [Rostislav Lastochkin](https://github.com/remtrik), [Robotix](https://github.com/Robotix22/)
@@ -1958,7 +1958,7 @@
 
 <img align="right" src="Resources/Pictures/Xiaomi-Redmi-Note-13-Pro-5G.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** garnet
 
 **Contributors:** [iNUCi](https://github.com/iNUCi)
@@ -2013,7 +2013,7 @@
 
 <img align="right" src="Resources/Pictures/Samsung-Galaxy-S22-5G.jpg" width="400" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** r0q
 
 **Contributors:** [Violet](https://github.com/ghatt-o/), [Robotix](https://github.com/Robotix22/)
@@ -2131,7 +2131,7 @@
 
 <img align="right" src="Resources/Pictures/Samsung-Galaxy-Tab-S8+-5G.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** gts8p
 
 **Contributors:** [Robotix](https://github.com/Robotix22/)
@@ -2605,7 +2605,7 @@
 
 <img align="right" src="Resources/Pictures/Xiaomi-11T-Pro.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** vili
 
 **Contributors:** [Robotix](https://github.com/Robotix22/)
@@ -3035,7 +3035,7 @@
 
 <img align="right" src="Resources/Pictures/Xiaomi-Poco-F3.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** alioth <br>
 **Models:** 3
 
@@ -3175,7 +3175,7 @@
 
 <img align="right" src="Resources/Pictures/Xiaomi-Pad-5.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** nabu
 
 **Contributors:** [iNUCi](https://github.com/iNUCi), [remtrik](https://github.com/remtrik), [Robotix](https://github.com/Robotix22/)
@@ -3486,7 +3486,7 @@
 
 <img align="right" src="Resources/Pictures/OnePlus-6.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** enchilada
 
 **Contributors:** [Daniel224455](https://github.com/Daniel224455/)
@@ -3837,7 +3837,7 @@
 
 <img align="right" src="Resources/Pictures/Xiaomi-Mi-11-Lite-5G.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** renoir
 
 **Contributors:** [Arminas](https://github.com/arminask/)
@@ -3963,7 +3963,7 @@
 
 <img align="right" src="Resources/Pictures/Samsung-Galaxy-A52s-5G.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** a52sxq
 
 **Contributors:** [Robotix](https://github.com/Robotix22/), [arminask](https://github.com/arminask/), People from Group <br>
@@ -4035,7 +4035,7 @@
 
 <img align="right" src="Resources/Pictures/Xiaomi-11-Lite-5G-NE.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** lisa
 
 **Contributors:** [ETCHDEV](https://github.com/ETCHDEV/), [Nikroks](https://github.com/N1kroks/), [Aistop](https://github.com/AistopGit/), [remtrik](https://github.com/remtrik), [Arminas](https://github.com/arminask), [Robotix](https://github.com/Robotix22/)
@@ -4185,7 +4185,7 @@
 
 <img align="right" src="Resources/Pictures/Xiaomi-Poco-X3-NFC.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** surya
 
 **Contributors:** [remtrik](https://github.com/remtrik), [Nikroks](https://github.com/N1kroks)
@@ -4319,7 +4319,7 @@
 
 <img align="right" src="Resources/Pictures/Xiaomi-Redmi-Note-9S.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** miatoll <br>
 **Models:** 6
 
@@ -4439,7 +4439,7 @@
 
 <img align="right" src="Resources/Pictures/Samsung-Galaxy-A52.png" width="500" alt="Preview">
 
-**State:** Active <br>
+**State:** Inactive <br>
 **Codename:** a52q
 
 **Contributors:** [arminask](https://github.com/arminask/), [N1kroks](https://github.com/N1kroks/)
@@ -4823,7 +4823,7 @@
 
 <img align="right" src="Resources/Pictures/Xiaomi-Redmi-Note-12.png" width="500" alt="Preview">
 
-**State:** Inactive <br>
+**State:** Active <br>
 **Codename:** tapas
 
 **Contributors:** [Statzar](https://github.com/Statzar/), [6adp](https://github.com/6adp/)
