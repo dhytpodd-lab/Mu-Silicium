@@ -1031,8 +1031,6 @@ BootManagerMenuEntry (
   EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL  *SimpleTextOut;
   UINTN                            BootTextColumn;
   UINTN                            BootTextRow;
-  EFI_HANDLE                       *StorageHandles;
-  UINTN                            StorageHandleCount;
 
   //
   // Set Logo status invalid when boot manager menu is launched
@@ -1054,42 +1052,9 @@ BootManagerMenuEntry (
                         );
   ASSERT (gStringPackHandle != NULL);
 
-  //
-  // Connect storage devices only to mount boot filesystems
-  // without hanging on uninitialized/broken peripheral controllers.
-  //
-  DEBUG ((EFI_D_WARN, "[BMM] 1. Connecting BlockIo storage...\n"));
-  StorageHandles     = NULL;
-  StorageHandleCount = 0;
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiBlockIoProtocolGuid,
-                  NULL,
-                  &StorageHandleCount,
-                  &StorageHandles
-                  );
-  if (!EFI_ERROR (Status) && (StorageHandles != NULL)) {
-    DEBUG ((EFI_D_WARN, "[BMM] 1. Found %d BlockIo handles\n", (UINT32)StorageHandleCount));
-    for (Index = 0; Index < StorageHandleCount; Index++) {
-      EFI_BLOCK_IO_PROTOCOL *BlockIo;
-      Status = gBS->HandleProtocol (StorageHandles[Index], &gEfiBlockIoProtocolGuid, (VOID **)&BlockIo);
-      if (EFI_ERROR (Status) || (BlockIo == NULL) || (BlockIo->Media == NULL)) {
-        continue;
-      }
-      if (BlockIo->Media->RemovableMedia || !BlockIo->Media->MediaPresent) {
-        DEBUG ((EFI_D_WARN, "[BMM] 1. Skip removable/absent media %d\n", (UINT32)Index));
-        continue;
-      }
-      DEBUG ((EFI_D_WARN, "[BMM] 1. Connecting handle %d/%d...\n", (UINT32)Index, (UINT32)StorageHandleCount));
-      gBS->ConnectController (StorageHandles[Index], NULL, NULL, FALSE);
-    }
-    FreePool (StorageHandles);
-  }
-
-  DEBUG ((EFI_D_WARN, "[BMM] 1b. Storage connect done!\n"));
-  DEBUG ((EFI_D_WARN, "[BMM] 2. RefreshAllBootOption...\n"));
+  DEBUG ((EFI_D_WARN, "[BMM] 1. Refreshing Boot Options...\n"));
   EfiBootManagerRefreshAllBootOption ();
-  DEBUG ((EFI_D_WARN, "[BMM] 2b. Refresh done!\n"));
+  DEBUG ((EFI_D_WARN, "[BMM] 2. Refresh done!\n"));
 
   BootOption = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
   DEBUG ((EFI_D_WARN, "[BMM] 3. BootOptionCount = %d\n", (UINT32)BootOptionCount));
