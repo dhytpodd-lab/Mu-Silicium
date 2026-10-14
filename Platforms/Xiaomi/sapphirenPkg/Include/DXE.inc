@@ -50,7 +50,8 @@
   INF Binaries/sapphiren/QcomPkg/Drivers/GpiDxe/GpiDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/I2CDxe/I2CDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/SPMIDxe/SPMIDxe.inf
-  INF Binaries/sapphiren/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
+  # SD Card Controller is non-functional on SM6225 and hangs on access
+  # INF Binaries/sapphiren/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/UFSDxe/UFSDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/TLMMDxe/TLMMDxe.inf
 

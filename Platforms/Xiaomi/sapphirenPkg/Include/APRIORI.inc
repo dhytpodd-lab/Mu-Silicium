@@ -32,7 +32,8 @@ APRIORI DXE {
 
   INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 
-  INF Binaries/sapphiren/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
+  # SD Card Controller is non-functional on SM6225 and hangs on access
+  # INF Binaries/sapphiren/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/UFSDxe/UFSDxe.inf
 
   INF FatPkg/EnhancedFatDxe/Fat.inf
