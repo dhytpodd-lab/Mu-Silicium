@@ -4916,6 +4916,26 @@
 </td></tr>
 </table>
 
+## Xiaomi Redmi Note 13 4G
+
+**State:** Active <br>
+**Codename:** sapphiren
+
+### UEFI Status
+
+| Feature            | Description       | State |
+|:-------------------|:------------------|:-----:|
+| Display            | SimpleFB          | ⏳    |
+| Internal Storage   | UFS               | ⏳    |
+| Side Buttons       |                   | ⏳    |
+| USB Host Mode      |                   | ⏳    |
+| USB Device Mode    |                   | ❌    |
+| USB Power Delivery |                   | ❌    |
+| Mass Storage       | Needs Device Mode | ❌    |
+| SD Card            |                   | ⏳    |
+| Windows Boot       |                   | ⏳    |
+| Linux Boot         |                   | ⏳    |
+
 </details>
 
 ---
@@ -4936,26 +4956,6 @@
 </td></tr>
 </table>
 
-
-## Xiaomi Redmi Note 13 4G
-
-**State:** Active <br>
-**Codename:** sapphiren
-
-### UEFI Status
-
-| Feature            | Description       | State |
-|:-------------------|:------------------|:-----:|
-| Display            | SimpleFB          | ⏳    |
-| Internal Storage   | UFS               | ⏳    |
-| Side Buttons       |                   | ⏳    |
-| USB Host Mode      |                   | ⏳    |
-| USB Device Mode    |                   | ❌    |
-| USB Power Delivery |                   | ❌    |
-| Mass Storage       | Needs Device Mode | ❌    |
-| SD Card            |                   | ⏳    |
-| Windows Boot       |                   | ⏳    |
-| Linux Boot         |                   | ⏳    |
 <details>
 <summary><b><strong>Xiaomi Devices</strong></b></summary>
 
