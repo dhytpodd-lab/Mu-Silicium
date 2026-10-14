@@ -3,11 +3,11 @@
 / {
 	model = "Qualcomm Technologies, Inc. KHAJE IDP nopmi sapphiren";
 	compatible = "qcom,khaje-idp\0qcom,khaje\0qcom,idp";
-	qcom,msm-id = <0x206 0x10000>;
+	qcom,msm-id = <0x24a 0x10000 0x206 0x10000>;
 	interrupt-parent = <0x01>;
 	#address-cells = <0x02>;
 	#size-cells = <0x02>;
-	qcom,board-id = <0x20022 0x00>;
+	qcom,board-id = <0x30022 0x00>;
 
 	memory {
 		ddr_manufacturer_id = <0xff>;
