@@ -25,7 +25,7 @@ gConfigurationDescriptor[] = {
   {"UfsSmmuConfigForOtherBootDev", 1},
   {"SecurityFlag", 0xC4},
   {"TzAppsRegnAddr", 0x61800000},
-  {"TzAppsRegnSize", 0x02100000},
+  {"TzAppsRegnSize", 0x04300000},
   {"TzAppsRegnSizeLowRAM", 0xB00000},
   {"EnableLogFsSyncInRetail", 0x0},
   {"ShmBridgememSize", 0xA00000},
