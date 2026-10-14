@@ -1,7 +1,7 @@
 name: Build UEFI for active devices
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "port/sapphiren"]
     paths:
       - 'Binaries'
       - 'Common/**'
