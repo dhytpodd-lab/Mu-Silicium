@@ -1,7 +1,7 @@
 __pycache__
 .vscode
-Build
-Conf
+/Build
+/Conf
 
 bootpayload.bin
 BootShim.bin
