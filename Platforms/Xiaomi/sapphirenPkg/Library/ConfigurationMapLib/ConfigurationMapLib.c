@@ -27,7 +27,7 @@ gConfigurationDescriptor[] = {
   {"TzAppsRegnAddr", 0x61800000},
   {"TzAppsRegnSize", 0x02100000},
   {"TzAppsRegnSizeLowRAM", 0xB00000},
-  {"EnableLogFsSyncInRetail", 0x1},
+  {"EnableLogFsSyncInRetail", 0x0},
   {"ShmBridgememSize", 0xA00000},
   {"EnableMultiThreading", 1},
   {"MaxCoreCnt", 8},

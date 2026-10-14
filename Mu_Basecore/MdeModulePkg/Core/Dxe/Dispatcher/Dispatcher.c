@@ -515,8 +515,7 @@ CoreDispatcher (
           &DriverEntry->ImageHandle,
           sizeof (DriverEntry->ImageHandle)
           );
-        ASSERT (DriverEntry->ImageHandle != NULL);
-
+        DEBUG ((DEBUG_WARN, "[DXE] %g\n", &DriverEntry->FileName));
         Status = CoreStartImage (DriverEntry->ImageHandle, NULL, NULL);
 
         REPORT_STATUS_CODE_WITH_EXTENDED_DATA (

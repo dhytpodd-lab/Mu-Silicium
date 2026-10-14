@@ -112,11 +112,16 @@ SecMain (VOID)
   SaveAndSetDebugTimerInterrupt (TRUE);
 #endif
 
+  DEBUG ((EFI_D_WARN, "[SEC] InitializeMemory...\n"));
+
   // Initialize Memory
   Status = InitializeMemory ();
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_WARN, "[SEC] InitializeMemory Failed! Status = %r\n", Status));
     return;
   }
+
+  DEBUG ((EFI_D_WARN, "[SEC] MemoryPeim OK\n"));
 
   // Build CPU HOB
   BuildCpuHob (ArmGetPhysicalAddressBits (), PcdGet8 (PcdPrePiCpuIoSize));
@@ -124,26 +129,36 @@ SecMain (VOID)
   // Set the Boot Mode
   SetBootMode (BOOT_WITH_DEFAULT_SETTINGS);
 
+  DEBUG ((EFI_D_WARN, "[SEC] PlatformPeim...\n"));
+
   // Initialize Platform HOBs
   Status = PlatformPeim ();
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_WARN, "[SEC] PlatformPeim Failed! Status = %r\n", Status));
     return;
   }
+
+  DEBUG ((EFI_D_WARN, "[SEC] PlatformPeim OK\n"));
 
   // Run Library Cconstructors
   ProcessLibraryConstructorList ();
 
+  DEBUG ((EFI_D_WARN, "[SEC] DecompressFirstFv...\n"));
+
   // Decompress all FVs
   Status = DecompressFirstFv ();
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Failed to Decompress FV! Status = %r\n", Status));
+    DEBUG ((EFI_D_WARN, "[SEC] Failed to Decompress FV! Status = %r\n", Status));
     return;
   }
+
+  DEBUG ((EFI_D_WARN, "[SEC] DecompressFirstFv OK\n"));
+  DEBUG ((EFI_D_WARN, "[SEC] Loading DXE Core...\n"));
 
   // Load DXE Core
   Status = LoadDxeCoreFromFv (NULL, 0);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Failed to Load DXE Core! Status = %r\n", Status));
+    DEBUG ((EFI_D_WARN, "[SEC] Failed to Load DXE Core! Status = %r\n", Status));
   }
 }
 

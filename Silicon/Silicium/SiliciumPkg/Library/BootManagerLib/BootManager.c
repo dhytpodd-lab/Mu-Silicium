@@ -38,6 +38,8 @@ VOID
 EFIAPI
 PlatformBootManagerBeforeConsole ()
 {
+  DEBUG ((EFI_D_WARN, "[BDS] BeforeConsole...\n"));
+
   // Signal End Of DXE
   EfiEventGroupSignal (&gEfiEndOfDxeEventGroupGuid);
 
@@ -100,6 +102,8 @@ PlatformBootManagerAfterConsole ()
 {
   EFI_STATUS                    Status      = EFI_SUCCESS;
   EFI_GRAPHICS_OUTPUT_PROTOCOL *GopProtocol = NULL;
+
+  DEBUG ((EFI_D_WARN, "[BDS] AfterConsole...\n"));
 
   // Post Setup GOP
   PostGopSetup (&GopProtocol);
