@@ -374,32 +374,55 @@ InitializeBootMenuData (
   UINTN  Index;
   UINTN  StrIndex;
 
-  if ((BootOption == NULL) || (BootMenuData == NULL)) {
+  if (BootMenuData == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
   BootMenuData->TitleToken[0] = STRING_TOKEN (STR_BOOT_POPUP_MENU_TITLE_STRING);
-  BootMenuData->PtrTokens     = AllocateZeroPool (BootOptionCount * sizeof (EFI_STRING_ID));
-  ASSERT (BootMenuData->PtrTokens != NULL);
 
-  //
-  // Skip boot option which created by BootNext Variable
-  //
-  for (StrIndex = 0, Index = 0; Index < BootOptionCount; Index++) {
-    if (IgnoreBootOption (&BootOption[Index])) {
-      continue;
+  if ((BootOption == NULL) || (BootOptionCount == 0)) {
+    BootMenuData->PtrTokens = AllocateZeroPool (sizeof (EFI_STRING_ID));
+    ASSERT (BootMenuData->PtrTokens != NULL);
+    BootMenuData->PtrTokens[0] = HiiSetString (
+                                   gStringPackHandle,
+                                   0,
+                                   L"No Boot Options Found (Insert USB Drive)",
+                                   NULL
+                                   );
+    BootMenuData->ItemCount = 1;
+  } else {
+    BootMenuData->PtrTokens = AllocateZeroPool (BootOptionCount * sizeof (EFI_STRING_ID));
+    ASSERT (BootMenuData->PtrTokens != NULL);
+
+    //
+    // Skip boot option which created by BootNext Variable
+    //
+    for (StrIndex = 0, Index = 0; Index < BootOptionCount; Index++) {
+      if (IgnoreBootOption (&BootOption[Index])) {
+        continue;
+      }
+
+      ASSERT (BootOption[Index].Description != NULL);
+      BootMenuData->PtrTokens[StrIndex++] = HiiSetString (
+                                              gStringPackHandle,
+                                              0,
+                                              BootOption[Index].Description,
+                                              NULL
+                                              );
     }
 
-    ASSERT (BootOption[Index].Description != NULL);
-    BootMenuData->PtrTokens[StrIndex++] = HiiSetString (
-                                            gStringPackHandle,
-                                            0,
-                                            BootOption[Index].Description,
-                                            NULL
-                                            );
+    BootMenuData->ItemCount = StrIndex;
+    if (BootMenuData->ItemCount == 0) {
+      BootMenuData->PtrTokens[0] = HiiSetString (
+                                     gStringPackHandle,
+                                     0,
+                                     L"No Valid Boot Options Found",
+                                     NULL
+                                     );
+      BootMenuData->ItemCount = 1;
+    }
   }
 
-  BootMenuData->ItemCount    = StrIndex;
   BootMenuData->HelpToken[0] = STRING_TOKEN (STR_BOOT_POPUP_MENU_HELP1_STRING);
   BootMenuData->HelpToken[1] = STRING_TOKEN (STR_BOOT_POPUP_MENU_HELP2_STRING);
   BootMenuData->HelpToken[2] = STRING_TOKEN (STR_BOOT_POPUP_MENU_HELP3_STRING);
@@ -742,7 +765,9 @@ BootFromSelectOption (
   UINTN  ItemNum;
   UINTN  Index;
 
-  ASSERT (BootOptions != NULL);
+  if ((BootOptions == NULL) || (BootOptionCount == 0)) {
+    return;
+  }
 
   for (ItemNum = 0, Index = 0; Index < BootOptionCount; Index++) {
     if (IgnoreBootOption (&BootOptions[Index])) {
@@ -1030,10 +1055,13 @@ BootManagerMenuEntry (
   //
   // Connect all prior to entering the platform setup menu.
   //
+  DEBUG ((EFI_D_WARN, "[BMM] 1. ConnectAll starting...\n"));
   EfiBootManagerConnectAll ();
+  DEBUG ((EFI_D_WARN, "[BMM] 2. RefreshAllBootOption...\n"));
   EfiBootManagerRefreshAllBootOption ();
 
   BootOption = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
+  DEBUG ((EFI_D_WARN, "[BMM] 3. BootOptionCount = %d\n", BootOptionCount));
 
   if (!mModeInitialized) {
     //
@@ -1095,7 +1123,9 @@ BootManagerMenuEntry (
   //
   // Initialize Boot menu data
   //
+  DEBUG ((EFI_D_WARN, "[BMM] 4. InitializeBootMenuData...\n"));
   Status = InitializeBootMenuData (BootOption, BootOptionCount, &BootMenuData);
+  DEBUG ((EFI_D_WARN, "[BMM] 5. Status = %r, ItemCount = %d\n", Status, BootMenuData.ItemCount));
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed InitializeBootMenuData %r\n", __func__, Status));
     return EFI_NOT_FOUND;
@@ -1104,7 +1134,9 @@ BootManagerMenuEntry (
   //
   // According to boot menu data to draw boot popup menu
   //
+  DEBUG ((EFI_D_WARN, "[BMM] 6. Drawing Boot Menu...\n"));
   DrawBootPopupMenu (&BootMenuData);
+  DEBUG ((EFI_D_WARN, "[BMM] 7. Ready! Press Vol+/Vol- to navigate, Power to select\n"));
 
   //
   // check user input to determine want to re-draw or boot from user selected item
@@ -1113,6 +1145,7 @@ BootManagerMenuEntry (
   while (!ExitApplication) {
     gBS->WaitForEvent (1, &gST->ConIn->WaitForKey, &Index);
     Status = gST->ConIn->ReadKeyStroke (gST->ConIn, &Key);
+    DEBUG ((EFI_D_WARN, "[BMM] Key: Unicode=0x%04x Scan=0x%04x\n", Key.UnicodeChar, Key.ScanCode));
     if (!EFI_ERROR (Status)) {
       switch (Key.UnicodeChar) {
         case CHAR_NULL:

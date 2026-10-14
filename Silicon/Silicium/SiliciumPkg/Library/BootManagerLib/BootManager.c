@@ -171,6 +171,7 @@ PlatformBootManagerPriorityBoot (IN OUT UINT16 **BootNext)
 
   // Execute Boot Manager Load Option
   EfiBootManagerBoot           (&LoadOption);
+  DEBUG ((EFI_D_WARN, "[BDS] PriorityBoot: BootManager returned! Status = %r\n", LoadOption.Status));
   EfiBootManagerFreeLoadOption (&LoadOption);
 }
 

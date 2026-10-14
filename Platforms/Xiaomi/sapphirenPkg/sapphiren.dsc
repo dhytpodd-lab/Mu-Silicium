@@ -62,6 +62,12 @@
   gSiliciumPkgTokenSpaceGuid.PcdFrameBufferColorDepth|32
 
   #
+  # Setup Video Resolution
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution|1080
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution|2400
+
+  #
   # Platform PEI
   #
   gQcomPkgTokenSpaceGuid.PcdPlatformType|"LA"
