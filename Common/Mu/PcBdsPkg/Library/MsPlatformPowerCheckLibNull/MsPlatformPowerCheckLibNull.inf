@@ -1,0 +1,33 @@
+## @file
+# Empty Platform Library of power check.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MsPlatformPowerCheckLib
+  FILE_GUID                      = 673D8757-AE03-4875-84FF-BB70E59D956A
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MsPlatformPowerCheckLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+ MsPlatformPowerCheckLibNull.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+
+[LibraryClasses]
+
+[Protocols]
+
+[Guids]
+
+

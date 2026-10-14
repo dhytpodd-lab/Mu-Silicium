@@ -1,0 +1,52 @@
+## @file
+#  SMM instance of the Advanced Logger library.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = SmmAdvancedLoggerLib
+  MODULE_UNI_FILE                = AdvancedLoggerLib.uni
+  FILE_GUID                      = 4facdc4b-9853-464c-8d4e-1ffae03fd4e3
+  MODULE_TYPE                    = DXE_SMM_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AdvancedLoggerLib | SMM_CORE
+  CONSTRUCTOR                    = SmmCoreAdvancedLoggerLibConstructor
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  AdvancedLoggerLib.c
+  ../AdvancedLoggerCommon.h
+  ../AdvancedLoggerCommon.c
+  ../AdvancedLoggerHwPort.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  AdvancedLoggerHdwPortLib
+  BaseLib
+  DebugLib
+  MemoryAllocationLib    # Not used, but necessary
+  SmmServicesTableLib
+  SynchronizationLib
+  TimerLib
+  UefiBootServicesTableLib
+
+[Guids]
+
+[Protocols]
+  gAdvancedLoggerProtocolGuid                                               ## CONSUMES
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## SOMETIMES_CONSUMES
+
+[FeaturePcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable

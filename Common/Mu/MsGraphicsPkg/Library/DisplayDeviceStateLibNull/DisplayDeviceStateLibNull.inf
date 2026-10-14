@@ -1,0 +1,27 @@
+## @file
+# Null library for displaying device state
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = DisplayDeviceStateLibNull
+FILE_GUID = 64A22F09-750E-4C9E-96AD-0C2572D07C26
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = DisplayDeviceStateLib
+
+
+[LibraryClasses]
+
+
+
+[Packages]
+MdePkg/MdePkg.dec
+
+
+[Sources]
+DisplayDeviceStateLibNull.c

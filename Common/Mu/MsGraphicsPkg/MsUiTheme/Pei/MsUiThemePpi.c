@@ -1,0 +1,127 @@
+/**
+Module Name:
+
+    MsUiThemePpi.c
+
+Abstract:
+
+ *  This module published the UI Fonts and Theme settings.
+
+Environment:
+
+    UEFI pre-boot Driver Execution Environment (DXE).
+
+  Copyright (C) Microsoft Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Uefi.h>                                     // UEFI base types
+
+#include <Protocol/MsUiThemeProtocol.h>
+
+#include <Library/DebugLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/PeiServicesTablePointerLib.h>
+#include <Library/PeiServicesLib.h>
+#include <Library/PlatformThemeLib.h>
+
+#include <Library/MsUiThemeCopyLib.h>
+
+#if FeaturePcdGet (PcdUiThemeInDxe)
+  #error UiTheme configured to be in DXE - should not be building or using this PPI
+#endif
+
+MS_UI_THEME_DESCRIPTION  *mPlatformTheme;
+
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_PEI_PPI_DESCRIPTOR  mMsUiThemePpiList = {
+  EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST,
+  &gMsUiThemePpiGuid,
+  NULL
+};
+
+/**
+  Entry to MsUiThemeProtocol
+
+  @param ImageHandle     The image handle.
+  @param SystemTable     The system table.
+  @return Status         From internal routine or boot object
+
+ **/
+EFI_STATUS
+EFIAPI
+MsUiThemePpiEntry (
+  IN  EFI_PEI_FILE_HANDLE     FileHandle,
+  IN  CONST EFI_PEI_SERVICES  **PeiServices
+  )
+{
+  EFI_STATUS               Status;
+  EFI_HOB_GUID_TYPE        *GuidHob;
+  EFI_PHYSICAL_ADDRESS     *HobData;
+  UINT32                   FontSize;
+  EFI_PHYSICAL_ADDRESS     FontCopyPhys;
+  MS_UI_THEME_DESCRIPTION  *NewFonts;
+
+  mPlatformTheme = PlatformThemeGet ();
+  DEBUG ((DEBUG_INFO, "MsUiThemePpi started.  Table at %p for %d\n", mPlatformTheme, sizeof (MS_UI_THEME_DESCRIPTION)));
+
+  DEBUG ((DEBUG_VERBOSE, "Dumping static font table.  Table at %p for %d\n", mPlatformTheme, sizeof (MS_UI_THEME_DESCRIPTION)));
+  DUMP_HEX (DEBUG_VERBOSE, 0, mPlatformTheme, sizeof (MS_UI_THEME_DESCRIPTION), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, (FONT_PTR_GET mPlatformTheme->FixedFont), sizeof (MS_UI_FONT_DESCRIPTION), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->FixedFont)->Package, sizeof (MS_UI_FONT_PACKAGE_HEADER), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->FixedFont)->Glyphs, 256, "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, (FONT_PTR_GET mPlatformTheme->LargeFont), sizeof (MS_UI_FONT_DESCRIPTION), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->LargeFont)->Package, sizeof (MS_UI_FONT_PACKAGE_HEADER), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->LargeFont)->Glyphs, 256, "");
+
+  FontSize = MsThemeGetSize (mPlatformTheme);
+
+  DEBUG ((DEBUG_INFO, "Font Size=%d\n", FontSize));
+
+  Status = PeiServicesAllocatePages (EfiBootServicesData, EFI_SIZE_TO_PAGES (FontSize), &FontCopyPhys);
+  ASSERT_EFI_ERROR (Status);
+
+  NewFonts = (MS_UI_THEME_DESCRIPTION *)(UINTN)FontCopyPhys;
+
+  Status = MsThemeCopy (NewFonts, FontSize, mPlatformTheme);
+
+  DEBUG ((DEBUG_VERBOSE, "Font Stats Fp=%p, size=%d\n", NewFonts, FontSize));
+  DEBUG ((DEBUG_VERBOSE, "Dumping new font table.  Table at %p for %d\n", &mPlatformTheme, sizeof (MS_UI_THEME_DESCRIPTION)));
+  DUMP_HEX (DEBUG_VERBOSE, 0, NewFonts, sizeof (MS_UI_THEME_DESCRIPTION), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, (FONT_PTR_GET NewFonts->FixedFont), sizeof (MS_UI_FONT_DESCRIPTION), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->FixedFont)->Package, sizeof (MS_UI_FONT_PACKAGE_HEADER), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->FixedFont)->Glyphs, 256, "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, (FONT_PTR_GET NewFonts->LargeFont), sizeof (MS_UI_FONT_DESCRIPTION), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->LargeFont)->Package, sizeof (MS_UI_FONT_PACKAGE_HEADER), "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->LargeFont)->Glyphs, 256, "");
+
+  // Create a HoB for passing the PEI font tables up to the DXE MsUiThemeProtocol
+  //
+  Status = PeiServicesCreateHob (
+             EFI_HOB_TYPE_GUID_EXTENSION,
+             (UINT16)(sizeof (EFI_HOB_GUID_TYPE) +
+                      sizeof (UINT64)),
+             (VOID **)&GuidHob
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to create HoB for passing Font information to DXE: %r \n", Status));
+    return Status;
+  }
+
+  DEBUG ((DEBUG_VERBOSE, "Font Hob=%p\n", GuidHob));
+  CopyGuid (&GuidHob->Name, &gMsUiThemeHobGuid);
+
+  HobData  = (EFI_PHYSICAL_ADDRESS *)(GuidHob+1);
+  *HobData = (EFI_PHYSICAL_ADDRESS)(UINTN)NewFonts;
+
+  DEBUG ((DEBUG_VERBOSE, "Font Hob=%p, HobData=%p NewFonts = *HobData = %p\n", GuidHob, HobData, *HobData));
+  DUMP_HEX (DEBUG_VERBOSE, 0, GuidHob, sizeof (EFI_HOB_GUID_TYPE)+sizeof (UINT64) + 8, "");
+
+  // Publish the Ppi for MsEarlyGraphics
+  mMsUiThemePpiList.Ppi = NewFonts;
+  Status                = PeiServicesInstallPpi (&mMsUiThemePpiList);
+
+  ASSERT_EFI_ERROR (Status);
+
+  return Status;
+}

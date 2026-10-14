@@ -1,0 +1,52 @@
+## @file
+#
+# Implements a Graphics Software Compositor as a filter driver that connects to the
+# Intel GOP driver and produces its own GOP protocol.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = RenderingEngineDxe
+  FILE_GUID                      = 02AA389E-CA29-43BF-BE05-A4CA038812F2
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DriverInit
+  UNLOAD_IMAGE                   = DriverUnload
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  RenderingEngine.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  DebugLib
+  BaseLib
+  MemoryAllocationLib
+  DxeServicesTableLib
+
+[Protocols]
+  gEfiDevicePathProtocolGuid          # CONSUMES
+  gMsSREProtocolGuid                  # PRODUCES
+  gEfiGraphicsOutputProtocolGuid      # PRODUCES
+
+[Guids]
+  gEfiEventBeforeExitBootServicesGuid
+
+[Pcd]
+  gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid
+
+[Depex]
+  TRUE

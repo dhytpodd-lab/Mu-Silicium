@@ -1,0 +1,113 @@
+#
+# Script to iterate thru an xml file and 
+# check the UEFI variable read/write properties of a given variable  
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+##
+
+
+import os
+import sys
+import argparse
+import logging
+import datetime
+import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import Element
+from edk2toollib.os.uefivariablesupport import UefiVariable
+
+#
+#main script function
+#
+def main():
+
+    parser = argparse.ArgumentParser(description='Variable Audit Tool')
+
+    #Output debug log
+    parser.add_argument("-l", dest="OutputLog", help="Create an output log file: ie -l out.txt", default=None)
+    parser.add_argument("--OutputXml", dest="OutputXml", help="Output Xml file that contains final results", default=None)
+    parser.add_argument("--InputXml", dest="InputXml", help="Input Xml file", default=None)
+    
+    #Turn on dubug level logging
+    parser.add_argument("--debug", action="store_true", dest="debug", help="turn on debug logging level for file log",  default=False)
+    options = parser.parse_args()
+
+    #setup file based logging if outputReport specified
+    if(options.OutputLog):
+        if(len(options.OutputLog) < 2):
+            logging.critical("the output log file parameter is invalid")
+            return -2
+        else:
+            #setup file based logging
+            filelogger = logging.FileHandler(filename=options.OutputLog, mode='w')
+            if(options.debug):
+                filelogger.setLevel(logging.DEBUG)
+            else:
+                filelogger.setLevel(logging.INFO)
+
+            filelogger.setFormatter(formatter)
+            logging.getLogger('').addHandler(filelogger)
+
+    logging.info("Log Started: " + datetime.datetime.strftime(datetime.datetime.now(), "%A, %B %d, %Y %I:%M%p" ))
+
+    #Check for required input parameters
+    if(not options.InputXml) or (not os.path.isfile(options.InputXml)):  
+        logging.critical("No Input Xml file specified")
+        return -1
+
+    if(not options.OutputXml):
+        logging.critical("Output Xml file path not specified")
+        return -2
+    
+    Uefi = UefiVariable()
+
+    #read in XML file as doc    
+    XmlFile = ET.parse(options.InputXml)
+    XmlRoot = XmlFile.getroot()
+
+    for var in XmlRoot.findall("Variable"):
+        name = var.get("Name")
+        guid = var.get("Guid")
+        (ReadStatus, Data) = Uefi.GetUefiVar(name, guid)
+        (WriteSuccess, ErrorCode)= Uefi.SetUefiVar(name, guid)
+        if(WriteSuccess != 0):
+            logging.info("Must Restore Var %s:%s" % (name, guid))
+            (RestoreSuccess, RestoreEC) = Uefi.SetUefiVar(name, guid, Data)
+            if (RestoreSuccess == 0):
+                logging.critical("Restoring failed for Var %s:%s  0x%X  ErrorCode: 0x%X %s" % (name, guid, RestoreSuccess, RestoreEC))
+        #append
+        #<FromOs>
+        #<ReadStatus>0x0 Success</ReadStatus>
+        #<WriteStatus>0x8000000000000002 Invalid Parameter</WriteStatus>  
+        ele = Element("FromOs")
+        rs = Element("ReadStatus")
+        ws = Element("WriteStatus")
+        rs.text = "0x%lX" % (ReadStatus)
+        ws.text = "0x%lX" % ErrorCode
+        ele.append(rs)
+        ele.append(ws)
+        var.append(ele)
+
+    XmlFile.write(options.OutputXml)
+    return 0
+
+
+if __name__ == '__main__':
+    #setup main console as logger
+    logger = logging.getLogger('')
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(levelname)s - %(message)s")
+    console = logging.StreamHandler()
+    console.setLevel(logging.CRITICAL)
+    console.setFormatter(formatter)
+    logger.addHandler(console)
+
+    #call main worker function
+    retcode = main()
+
+    if retcode != 0:
+        logging.critical("Failed.  Return Code: %i" % retcode)
+    #end logging
+    logging.shutdown()
+    sys.exit(retcode)

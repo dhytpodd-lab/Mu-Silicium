@@ -1,0 +1,38 @@
+## @file
+#  This library is NULL implementation for testing 
+#
+# Copyright (C) Microsoft Corporation. All rights reserved..
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BootGraphicsProviderLibNull
+  FILE_GUID                      = ad2b103b-e42e-476d-b96c-7aff7c6ff375
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BootGraphicsProviderLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  BootGraphicsProviderLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[LibraryClasses]
+
+
+[Protocols]
+
+
+[Pcd]
+
+

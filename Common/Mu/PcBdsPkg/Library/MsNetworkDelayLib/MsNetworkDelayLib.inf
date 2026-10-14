@@ -1,0 +1,44 @@
+## @file  /* cspell: disable-next-line */
+# Library that is attached to SnpDxe.inf to prevent the network from starting until
+# networking has been requested.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MsNetworkDelayLib
+  FILE_GUID                      = c9322a46-4a5f-4e75-b9a3-8781c45ad86d
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MsNetworkDelayLib|DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER
+  CONSTRUCTOR                    = MsNetworkDelayLibConstructor
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64
+#
+
+[Sources]
+  MsNetworkDelayLib.c
+
+[Packages]
+  PcBdsPkg/PcBdsPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  DebugLib
+
+[Guids]
+
+[Protocols]
+  gMsNetworkDelayProtocolGuid
+
+[FeaturePcd]
+
+[Pcd]
+
+[Depex]
+  gMsNetworkDelayProtocolGuid

@@ -1,0 +1,152 @@
+##
+# CI configuration for MsCorePkg
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+    "PrEval": {
+        "DscPath": "MsCorePkg.dsc",
+    },
+    ## options defined ci/Plugin/CompilerPlugin
+    "CompilerPlugin": {
+        "DscPath": "MsCorePkg.dsc"
+    },
+
+    ## options defined ci/Plugin/CharEncodingCheck
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+
+    ## options defined ci/Plugin/DependencyCheck
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "CryptoPkg/CryptoPkg.dec",
+            "MsCorePkg/MsCorePkg.dec",
+            "MsWheaPkg/MsWheaPkg.dec",
+            "SecurityPkg/SecurityPkg.dec",
+            "UefiCpuPkg/UefiCpuPkg.dec",
+            "FmpDevicePkg/FmpDevicePkg.dec",
+            "NetworkPkg/NetworkPkg.dec",
+            "ArmPkg/ArmPkg.dec"
+        ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        "AcceptableDependencies-UEFI_APPLICATION": [
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        "IgnoreInf": []
+    },
+
+    ## options defined ci/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "UnitTests/MsCorePkgHostTest.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "UnitTests/MsCorePkgHostTest.dsc"
+    },
+
+    ## options defined ci/Plugin/DscCompleteCheck
+    "DscCompleteCheck": {
+        "IgnoreInf": [
+            "MsCorePkg/Library/FltUsedLib/FltUsedLib.inf"
+        ],
+        "DscPath": "MsCorePkg.dsc"
+    },
+
+    ## options defined ci/Plugin/GuidCheck
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": [],
+        "IgnoreDuplicates": []
+    },
+
+    ## options defined ci/Plugin/LibraryClassCheck
+    "LibraryClassCheck": {
+        "IgnoreLibraryClass": [],
+        "IgnoreHeaderFile": []
+    },
+
+    ## options defined ci/Plugin/SpellCheck
+    "SpellCheck": {
+        "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
+        ],
+        "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
+        ],
+        "ExtendWords": [           # words to extend to the dictionary for this package
+            "checksumed",
+            "FVDXE",
+            "CMIIT",
+            "JASTST",
+            "mountvol",
+            "EKU's",
+            "bootable",
+            "MSCHANGE",
+            "UNRECOVERED",
+            "hibit",
+            "XIPFLAGS",
+            "mstrict",
+            "mgeneral",
+            "frontpage",
+            "mitigations",
+            "AUTHREAD",
+            "OWNERREAD",
+            "BREAKASSERT",
+            "CARDBUS",
+            "PCIEXP",
+            "DEADLOOP",
+            "DEBUGPORT",
+            "EXTENDMEM",
+            "FILELOGGING",
+            "Indexfor",
+            "PLATFORMCREATE",
+            "POLICYREAD",
+            "POLICYWRITE",
+            "SQRTUNSIGNED",
+            "VARPOL",
+            "SNP's",
+            "UEFI's",
+            "clzll",
+            "icdicpr",
+            "icdsgir",
+            "icdspr",
+            "icpendr",
+            "intid",
+            "ishst",
+            "ispendr",
+            "mpidr",
+            "typer",
+            "vlpis",
+            # ArmGicLib
+            "ackintid",
+            "icciar",
+            "iccicr",
+            "icciidr",
+            "iccpmr",
+            "icdicer",
+            "icdictr",
+            "icdiser",
+            "icenabler",
+            "igrpen",
+            "ipriority",
+            "isenabler",
+            "irouter",
+            "uintn",
+        ],
+        "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
+    },
+
+    "RustHostUnitTestPlugin": {
+        "Coverage": .75,
+        "CoverageOverrides": {
+            "RustBootServicesAllocatorDxe": 0.03
+        }
+    }
+}

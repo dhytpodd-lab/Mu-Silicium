@@ -1,0 +1,84 @@
+## @file -- MsWheaReportDxe.inf
+#
+#  MsWheaReportDxe implements Microsoft WHEA report service for Dxe phase.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MsWheaReportDxe
+  FILE_GUID                      = 995F045B-0265-46A4-8D21-001211A24A4F
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = MsWheaReportDxeEntry
+
+#
+# The following information is for reference only and not required by the
+# build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  ../MsWheaReportCommon.h
+  ../MsWheaReportCommon.c
+  ../MsWheaEarlyStorageMgr.c
+  ../MsWheaEarlyStorageMgr.h
+  ../MsWheaReportHER.c
+  ../MsWheaReportHER.h
+  MsWheaReportDxe.c
+  MsWheaReportList.c
+  MsWheaReportList.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  UefiLib
+  DebugLib
+  HobLib
+  MemoryAllocationLib
+  PcdLib
+  PrintLib
+  ReportStatusCodeLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+  MsWheaEarlyStorageLib
+  VariablePolicyHelperLib
+
+[Protocols]
+  gEfiAcpiTableProtocolGuid           ## CONSUMES
+  gEfiRuntimeArchProtocolGuid		      ## CONSUMES
+  gEfiRscHandlerProtocolGuid          ## CONSUMES
+  gEfiVariableWriteArchProtocolGuid   ## CONSUMES
+  gEfiVariableArchProtocolGuid        ## CONSUMES
+  gEfiRealTimeClockArchProtocolGuid   ## CONSUMES
+  gEdkiiVariablePolicyProtocolGuid    ## CONSUMES
+
+[Pcd]
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue
+  gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaRSCHandlerTpl
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareMaxCount
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxHardwareErrorVariableSize
+
+[Guids]
+  gEfiHardwareErrorVariableGuid       ## CONSUMES
+  gEfiEventExitBootServicesGuid       ## CONSUMES
+  gMuTelemetrySectionTypeGuid         ## CONSUMES
+  gMsWheaRSCDataTypeGuid              ## CONSUMES
+  gMsWheaReportServiceGuid            ## SOMETIMES_CONSUMES
+  gEfiEventNotificationTypeBootGuid   ## SOMETIMES_CONSUMES
+  gMsWheaReportRecordIDGuid           ## CONSUMES
+
+[Depex]
+  gEfiRscHandlerProtocolGuid

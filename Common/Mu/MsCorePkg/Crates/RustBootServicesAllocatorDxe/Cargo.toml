@@ -1,0 +1,14 @@
+[package]
+name = "RustBootServicesAllocatorDxe"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rust_boot_services_allocator_dxe"
+path = "src/lib.rs"
+
+[dependencies]
+r-efi = {workspace=true}
+
+[dev-dependencies]
+spin = {workspace=true}

@@ -1,0 +1,32 @@
+## @file MsUiThemeCopyLib.inf
+#
+# This library contains access functions for dealing with the
+# Copying of an MS_UI_THEME
+#
+# @copyright
+# Copyright (C) Microsoft Corporation. All rights reserved.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MsUiThemeCopyLib
+  FILE_GUID           = 7A6722F7-4446-4112-9802-F6B7DEE04824
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = BASE
+  LIBRARY_CLASS       = MsUiThemeCopyLib
+
+[Sources]
+  MsUiThemeCopyLib.c
+
+[Packages]
+  MsGraphicsPkg/MsGraphicsPkg.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+
+[BuildOptions]
+#  DEBUG_*_*_CC_FLAGS  = /FAcs /P

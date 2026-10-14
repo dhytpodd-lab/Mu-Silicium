@@ -1,0 +1,259 @@
+//! Rust MU Telemetry Helper
+//!
+//! Rust helper library for logging telemetry.
+//!
+//! ## Examples and Usage
+//!
+//! ```no_run
+//! use mu_telemetry_helper_lib::{init_telemetry, log_telemetry};
+//! use r_efi::{efi, system};
+//! pub extern "efiapi" fn efi_main(
+//!     _image_handle: efi::Handle,
+//!     system_table: *const system::SystemTable,
+//!  ) -> efi::Status {
+//!
+//!    //Initialize Boot Services
+//!    unsafe {
+//!        init_telemetry((*system_table).boot_services);
+//!    }
+//!
+//!    //if (some_failure) {
+//!        let _ = log_telemetry(false, 0xA1A2A3A4, 0xB1B2B3B4B5B6B7B8, 0xC1C2C3C4C5C6C7C8, None, None, None);
+//!    //}
+//!
+//!    efi::Status::SUCCESS
+//! }
+//! ```
+//!
+//! ## License
+//!
+//! Copyright (C) Microsoft Corporation.
+
+//!
+//! SPDX-License-Identifier: BSD-2-Clause-Patent
+//!
+#![cfg_attr(target_os = "uefi", no_std)]
+
+use patina::boot_services::{BootServices, StandardBootServices};
+use patina::pi::protocols::status_code::{EfiStatusCodeType, EfiStatusCodeValue};
+use patina::pi::status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR};
+use patina::uefi_protocol::status_code::StatusCodeRuntimeProtocol;
+use patina::{base::guid::BinaryGuid, guids};
+use r_efi::efi;
+
+static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
+
+/// Matches gMsWheaRSCDataTypeGuid in MsWheaPkg\MsWheaPkg.dec
+/// Matches MS_WHEA_RSC_DATA_TYPE in MsWheaPkg\Private\Guid\MsWheaReportDataType.h
+const MS_WHEA_RSC_DATA_TYPE_GUID: efi::Guid =
+    BinaryGuid::from_string("91DEEA05-8C0A-4DCD-B91E-F21CA0C68405").into_inner();
+
+const MS_WHEA_ERROR_STATUS_TYPE_INFO: EfiStatusCodeType = EFI_ERROR_MINOR | EFI_ERROR_CODE;
+const MS_WHEA_ERROR_STATUS_TYPE_FATAL: EfiStatusCodeType = EFI_ERROR_MAJOR | EFI_ERROR_CODE;
+
+/**
+ Internal RSC Extended Data Buffer format used by Project Mu firmware WHEA infrastructure.
+
+ A Buffer of this format should be passed to ReportStatusCodeWithExtendedData
+
+ library_id:        GUID of the library reporting the error. If not from a library use zero guid
+ ihv_sharing_guid:  GUID of the partner to share this with. If none use zero guid
+ additional_info1:  64 bit value used for caller to include necessary interrogative information
+ additional_info2:  64 bit value used for caller to include necessary interrogative information
+**/
+// #pragma pack(1)
+// typedef struct {
+//     EFI_GUID    LibraryID;
+//     EFI_GUID    IhvSharingGuid;
+//     UINT64      AdditionalInfo1;
+//     UINT64      AdditionalInfo2;
+//   } MS_WHEA_RSC_INTERNAL_ERROR_DATA;
+// #pragma pack()
+#[repr(C)]
+struct MsWheaRscInternalErrorData {
+    library_id: efi::Guid,
+    ihv_sharing_guid: efi::Guid,
+    additional_info1: u64,
+    additional_info2: u64,
+}
+
+/// Log telemetry
+///
+///   @param\[in\]  is_fatal      This should be set to TRUE if the event will prevent a successful boot.
+///   @param\[in\]  class_id      An EFI_STATUS_CODE_VALUE representing the event that has occurred. This
+///                             value will occupy the same space as EventId from LogCriticalEvent(), and
+///                             should be unique enough to identify a module or region of code.
+///   @param\[in\]  extra_data1   \[Optional\] This should be data specific to the cause. Ideally, used to contain contextual
+///                             or runtime data related to the event (e.g. register contents, failure codes, etc.).
+///                             It will be persisted.
+///   @param\[in\]  extra_data2   \[Optional\] Another UINT64 similar to ExtraData1.
+///   @param\[in\]  component_id  \[Optional\] This identifier should uniquely identify the module that is emitting this
+///                             event. When this is passed in as NULL, report status code will automatically populate
+///                             this field with gEfiCallerIdGuid.
+///   @param\[in\]  library_id    This should identify the library that is emitting this event.
+///   @param\[in\]  ihv_id        This should identify the Ihv related to this event if applicable. For example,
+///                             this would typically be used for TPM and SOC specific events.
+#[cfg(not(tarpaulin_include))]
+pub fn log_telemetry(
+    is_fatal: bool,
+    class_id: EfiStatusCodeValue,
+    extra_data1: u64,
+    extra_data2: u64,
+    component_id: Option<&efi::Guid>,
+    library_id: Option<&efi::Guid>,
+    ihv_id: Option<&efi::Guid>,
+) -> Result<(), efi::Status> {
+    log_telemetry_internal(
+        &BOOT_SERVICES,
+        is_fatal,
+        class_id,
+        extra_data1,
+        extra_data2,
+        component_id,
+        library_id,
+        ihv_id,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn log_telemetry_internal<B: BootServices>(
+    boot_services: &B,
+    is_fatal: bool,
+    class_id: EfiStatusCodeValue,
+    extra_data1: u64,
+    extra_data2: u64,
+    component_id: Option<&efi::Guid>,
+    library_id: Option<&efi::Guid>,
+    ihv_id: Option<&efi::Guid>,
+) -> Result<(), efi::Status> {
+    let status_code_type: EfiStatusCodeType =
+        if is_fatal { MS_WHEA_ERROR_STATUS_TYPE_FATAL } else { MS_WHEA_ERROR_STATUS_TYPE_INFO };
+
+    let error_data = MsWheaRscInternalErrorData {
+        library_id: *library_id.unwrap_or(guids::ZERO.as_efi_guid()),
+        ihv_sharing_guid: *ihv_id.unwrap_or(guids::ZERO.as_efi_guid()),
+        additional_info1: extra_data1,
+        additional_info2: extra_data2,
+    };
+
+    let protocol = unsafe { boot_services.locate_protocol::<StatusCodeRuntimeProtocol>(None)? };
+
+    let caller_id = component_id.unwrap_or(guids::CALLER_ID.as_efi_guid());
+
+    protocol.report_status_code_with_data(
+        status_code_type,
+        class_id,
+        0,
+        caller_id,
+        MS_WHEA_RSC_DATA_TYPE_GUID,
+        error_data,
+    )
+}
+
+#[cfg(not(tarpaulin_include))]
+pub fn init_telemetry(efi_boot_services: *mut efi::BootServices) {
+    BOOT_SERVICES.init(efi_boot_services)
+}
+
+#[cfg(test)]
+mod test {
+    use patina::base::guid::BinaryGuid;
+    use patina::boot_services::MockBootServices;
+    use patina::pi::protocols::{
+        status_code,
+        status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue},
+    };
+    use r_efi::efi;
+
+    use crate::{MS_WHEA_ERROR_STATUS_TYPE_FATAL, MsWheaRscInternalErrorData, log_telemetry_internal};
+    use core::mem::size_of;
+    use patina::uefi_protocol::status_code::StatusCodeRuntimeProtocol;
+
+    const DATA_SIZE: usize = size_of::<EfiStatusCodeData>() + size_of::<MsWheaRscInternalErrorData>();
+    const MOCK_CALLER_ID: efi::Guid = BinaryGuid::from_string("d0d1d2d3-d4d5-d6d7-d8d9-dadbdcdddedf").into_inner();
+    const MOCK_STATUS_CODE_VALUE: EfiStatusCodeValue = 0xa0a1a2a3;
+
+    extern "efiapi" fn mock_report_status_code(
+        r#type: EfiStatusCodeType,
+        value: EfiStatusCodeValue,
+        instance: u32,
+        caller_id: *const efi::Guid,     // Optional
+        _data: *const EfiStatusCodeData, // Optional
+    ) -> efi::Status {
+        assert_eq!(value, MOCK_STATUS_CODE_VALUE);
+        assert_eq!(instance, 0);
+        assert_eq!(unsafe { *caller_id }, MOCK_CALLER_ID);
+        if r#type == MS_WHEA_ERROR_STATUS_TYPE_FATAL { efi::Status::SUCCESS } else { efi::Status::INVALID_PARAMETER }
+    }
+
+    static MOCK_STATUS_CODE_RUNTIME_INTERFACE: status_code::Protocol = {
+        let f: status_code::ReportStatusCode = mock_report_status_code;
+        status_code::Protocol { report_status_code: f }
+    };
+
+    #[test]
+    fn try_log_telemetry() {
+        let mut mock_boot_services: MockBootServices = MockBootServices::new();
+
+        mock_boot_services.expect_locate_protocol().returning(|registration| unsafe {
+            assert_eq!(registration, None);
+            Ok((&MOCK_STATUS_CODE_RUNTIME_INTERFACE as *const status_code::Protocol as *mut StatusCodeRuntimeProtocol)
+                .as_mut()
+                .unwrap())
+        });
+
+        // Test sizes of "repr(C)" structs
+        assert_eq!(size_of::<MsWheaRscInternalErrorData>(), 48);
+        assert_eq!(size_of::<[u8; 68]>(), DATA_SIZE);
+        assert_eq!(
+            Ok(()),
+            log_telemetry_internal(
+                &mock_boot_services,
+                true,
+                MOCK_STATUS_CODE_VALUE,
+                0xb0b1b2b3b4b5b6b7,
+                0xc0c1c2c3c4c5c6c7,
+                Some(&MOCK_CALLER_ID),
+                Some(BinaryGuid::from_string("e0e1e2e3-e4e5-e6e7-e8e9-eaebecedeeef").as_efi_guid()),
+                Some(BinaryGuid::from_string("f0f1f2f3-f4f5-f6f7-f8f9-fafbfcfdfeff").as_efi_guid())
+            )
+        );
+        assert_eq!(
+            Err(efi::Status::INVALID_PARAMETER),
+            log_telemetry_internal(
+                &mock_boot_services,
+                false,
+                MOCK_STATUS_CODE_VALUE,
+                0xb0b1b2b3b4b5b6b7,
+                0xc0c1c2c3c4c5c6c7,
+                Some(&MOCK_CALLER_ID),
+                None,
+                None
+            )
+        );
+    }
+
+    #[test]
+    fn test_protocol_not_found() {
+        let mut mock_boot_services: MockBootServices = MockBootServices::new();
+
+        mock_boot_services.expect_locate_protocol::<StatusCodeRuntimeProtocol>().returning(|registration| {
+            assert_eq!(registration, None);
+            //Simulate "marker protocol" without an Interface
+            Err(efi::Status::NOT_FOUND)
+        });
+        assert_eq!(
+            Err(efi::Status::NOT_FOUND),
+            log_telemetry_internal(
+                &mock_boot_services,
+                false,
+                MOCK_STATUS_CODE_VALUE,
+                0xb0b1b2b3b4b5b6b7,
+                0xc0c1c2c3c4c5c6c7,
+                Some(&MOCK_CALLER_ID),
+                None,
+                None
+            )
+        );
+    }
+}

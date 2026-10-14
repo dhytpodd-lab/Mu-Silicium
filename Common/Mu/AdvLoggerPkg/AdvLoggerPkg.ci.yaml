@@ -1,0 +1,108 @@
+##
+# CI configuration for AdvLoggerPkg
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+    "PrEval": {
+        "DscPath": "AdvLoggerPkg.dsc",
+    },
+    ## options defined ci/Plugin/CompilerPlugin
+    "CompilerPlugin": {
+        "DscPath": "AdvLoggerPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/CharEncodingCheck
+    "CharEncodingCheck": {
+        "IgnoreFiles": ["Application/Windows/PrmFuncSample/PrmFunc/prmfuncsample.inf"]
+    },
+
+    ## options defined ci/Plugin/DependencyCheck
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "ArmPkg/ArmPkg.dec",
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "AdvLoggerPkg/AdvLoggerPkg.dec",
+            "MsWheaPkg/MsWheaPkg.dec",
+            "PolicyServicePkg/PolicyServicePkg.dec",
+            "ShellPkg/ShellPkg.dec",
+            "PrmPkg/PrmPkg.dec"
+        ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        "AcceptableDependencies-UEFI_APPLICATION": [
+        ],
+        "IgnoreInf": []
+    },
+
+    ## options defined ci/Plugin/DscCompleteCheck
+    "DscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "AdvLoggerPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/GuidCheck
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": ["**/Application/Windows/PrmFuncSample/PrmFunc/prmfuncsample.inf"],
+        "IgnoreDuplicates": []
+    },
+
+    ## options defined ci/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "Test/AdvLoggerHostTest.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "Test/AdvLoggerHostTest.dsc"
+    },
+
+    ## options defined ci/Plugin/LibraryClassCheck
+    "LibraryClassCheck": {
+        "IgnoreLibraryClass": [],
+        "IgnoreHeaderFile": []
+    },
+
+    ## options defined ci/Plugin/SpellCheck
+    "SpellCheck": {
+        "AuditOnly": False,           # Fails test but run in AuditOnly mode to collect log
+        "IgnoreFiles": ["Application/Windows/PrmFuncSample/**"],            # use gitignore syntax to ignore errors in matching files
+        "IgnoreStandardPaths": [],    # Standard Plugin defined paths that should be ignore
+        "AdditionalIncludePaths": [], # Additional paths to spell check (wildcards supported)
+        "ExtendWords": [
+          lodsd,
+          debugport,
+          infor,
+          valist,
+          premem,
+          uncacheable,
+          physmask,
+          PHYSBASE,
+          DEADLOOP,
+          LOGTELEMETRY,
+          DEBUGAGENT,
+          POSTMEM,
+          MMARM,
+          BLKIO,
+          dlink,
+          uintn,
+          mcore,
+          rtdxe,
+          smmcr,
+          unspd,
+        ]
+    },
+
+    "RustHostUnitTestPlugin": {
+        "Coverage": .75,
+        "CoverageOverrides": {
+            "RustAdvancedLoggerDxe": 0.0
+        }
+    }
+}

@@ -1,0 +1,55 @@
+## @file SmmPagingProtectionsTestSmm.inf
+# This is the SMM portion of the SmmPagingProtectionsTest driver.
+# This driver will be signalled by the DXE portion and will perform requested operations
+# to probe the extent of the SMM memory protections (like NX).
+#
+##
+# Copyright (C) Microsoft Corporation. All rights reserved.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+# MS_CHANGE - Entire file created.
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SmmPagingProtectionsTestStandaloneMm
+  FILE_GUID                      = E1A3A284-D6C7-4C44-B913-A460CC269DE2
+  MODULE_TYPE                    = MM_STANDALONE
+  VERSION_STRING                 = 1.0
+  PI_SPECIFICATION_VERSION       = 0x00010032
+  ENTRY_POINT                    = StandaloneMmPagingProtectionsTestEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+
+[Sources]
+  SmmPagingProtectionsTestDriver.c
+  SmmPagingProtectionsTestDriver.h
+  SmmPagingProtectionsTestStandaloneMm.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  UefiTestingPkg/UefiTestingPkg.dec
+  StandaloneMmPkg/StandaloneMmPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  MemLib
+  MmServicesTableLib
+  StandaloneMmDriverEntryPoint
+  PlatformSmmProtectionsTestLib
+
+[Protocols]
+  gSmmExceptionTestProtocolGuid           ## CONSUMES
+
+[Depex]
+  gSmmExceptionTestProtocolGuid

@@ -1,0 +1,36 @@
+## @file
+# Null Power Services Library class to support Platforms that dont have battery
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MsNVBootReasonLib
+  FILE_GUID                      = 9ab7d76f-2683-4a1c-af85-70ab5b165f08
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MsNVBootReasonLib|DXE_DRIVER UEFI_APPLICATION
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  MsNVBootReasonLibNull.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+
+[LibraryClasses]
+
+[Protocols]
+
+[Guids]
+
+[Pcd]
+

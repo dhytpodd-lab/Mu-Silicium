@@ -1,0 +1,42 @@
+## @file
+# Library to provide interface on Reboot Reason non volatile variables
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MsNVBootReasonLib
+  FILE_GUID                      = 4D3B9FF6-5790-4781-8D72-257A006C842A
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MsNVBootReasonLib|DXE_DRIVER UEFI_APPLICATION
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MsNVBootReasonLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+  OemPkg/OemPkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  UefiRuntimeServicesTableLib
+  DebugLib
+
+[Protocols]
+
+[Guids]
+  gOemBootNVVarGuid
+
+[Pcd]

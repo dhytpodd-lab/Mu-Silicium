@@ -1,0 +1,17 @@
+{
+    "suppressions": [
+        {
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/CA-NotTrusted.pfx",
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/CA-NotTrusted.pvk",
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/CA.pfx",
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/CA.pvk",
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/Leaf-NoEku.pfx",
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/Leaf-NoEku.pvk",
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/Leaf-test.pfx",
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/Leaf-test.pvk",
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/Root.pfx",
+            "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/Root.pvk",
+            "_justification": "Test case test certificates."
+        }
+    ]
+}

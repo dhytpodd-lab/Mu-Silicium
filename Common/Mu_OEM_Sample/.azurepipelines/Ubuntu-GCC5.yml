@@ -1,0 +1,39 @@
+## @file
+# Azure Pipeline build file for a build using ubuntu and GCC5.
+#
+# NOTE: This file is automatically synchronized from Mu DevOps. Update the original file there
+#       instead of the file in this repo.
+#
+# - Mu DevOps Repo: https://github.com/microsoft/mu_devops
+# - File Sync Settings: https://github.com/microsoft/mu_devops/blob/main/.sync/Files.yml
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+variables:
+- group: architectures-arm64-x86-64
+- name: tool_chain_tag
+  value: GCC
+- name: vm_image
+  value: ubuntu-latest
+- group: coverage
+
+extends:
+  template: MuDevOpsWrapper.yml
+  parameters:
+    do_ci_build: true
+    do_ci_setup: true
+    do_non_ci_setup: true
+    container_build: true
+    os_type: Linux
+    build_matrix:
+      TARGET_OEM_DEBUG:
+        Pkgs: 'OemPkg'
+        Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
+        ArchList: $(arch_list)
+      TARGET_OEM_DEBUG_ARM:
+        Pkgs: 'OemPkg'
+        Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
+        ArchList: $(arch_list)
+        SelfHostAgent: true

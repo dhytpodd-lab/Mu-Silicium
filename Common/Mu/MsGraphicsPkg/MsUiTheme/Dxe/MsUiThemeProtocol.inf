@@ -1,0 +1,52 @@
+## @file
+# MsUiThemeProtocol.inf
+#
+# MsUiThemeProtocol implements the desired Fonts and Theme settings
+#
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MsUiThemeProtocol
+  FILE_GUID                      = 16a5dd36-4c29-4e85-b0b9-c05883753de7
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = MsUiThemeProtocolEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  MsUiThemeProtocol.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  DebugLib
+  HobLib
+  PlatformThemeLib
+  MsUiThemeCopyLib
+
+[Guids]
+  gMsUiThemeHobGuid
+
+[Protocols]
+  gMsUiThemeProtocolGuid
+
+[Pcd]
+    gMsGraphicsPkgTokenSpaceGuid.PcdUiThemeInDxe
+
+[Depex]
+    TRUE

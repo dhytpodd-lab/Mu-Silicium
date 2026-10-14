@@ -1,0 +1,97 @@
+## @file
+# CI configuration for MfciPkg
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+    "PrEval": {
+        "DscPath": "MfciPkg.dsc",
+    },
+    ## options defined ci/Plugin/CompilerPlugin
+    "CompilerPlugin": {
+        "DscPath": "MfciPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/CharEncodingCheck
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+
+    ## options defined ci/Plugin/DependencyCheck
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "MfciPkg/MfciPkg.dec",
+            "MsCorePkg/MsCorePkg.dec",
+            "CryptoPkg/CryptoPkg.dec",
+            "SecurityPkg/SecurityPkg.dec",
+            "MsWheaPkg/MsWheaPkg.dec",
+            "PcBdsPkg/PcBdsPkg.dec"
+        ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        "IgnoreInf": []
+    },
+
+    ## options defined ci/Plugin/DscCompleteCheck
+    "DscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "MfciPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "UnitTests/MfciPkgHostTest.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "UnitTests/MfciPkgHostTest.dsc"
+    },
+
+    ## options defined ci/Plugin/GuidCheck
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": [],
+        "IgnoreDuplicates": []
+    },
+
+    ## options defined ci/Plugin/LibraryClassCheck
+    "LibraryClassCheck": {
+        "IgnoreLibraryClass": [],
+        "IgnoreHeaderFile": []
+    },
+
+    ## options defined ci/Plugin/SpellCheck
+    "SpellCheck": {
+        "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
+        ],
+        "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
+        ],
+        "ExtendWords": [           # words to extend to the dictionary for this package
+            "basecore",
+            "certutil",
+            "commandline",
+            "detatched",
+            "mfci's",
+            "mfcipkg",
+            "pkg's",
+            "reprovisioned",
+            "cmocka",
+            "Contoso",
+            "SANITYCHECK",
+            "SECUREBOOT",
+            "SERIALNUMBER",
+            "VALIDATEBLOB",
+            "malformatted",
+            "nonced",
+            "eku's"
+        ],
+        "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
+    }
+}

@@ -1,0 +1,64 @@
+## @file MsWheaReportUnitTestApp.inf
+#
+# Tests for MS WHEA report tests with various payloads and error severities.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+[Defines]
+  INF_VERSION         = 0x00010005
+  BASE_NAME           = MsWheaReportUnitTestApp
+  FILE_GUID           = 75C3E1C3-40EE-4CC2-AF40-5ADE47870D86
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = UEFI_APPLICATION
+  ENTRY_POINT         = MsWheaReportUnitTestAppEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+
+[Sources]
+  MsWheaReportUnitTestApp.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+  ShellPkg/ShellPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UnitTestLib
+  UnitTestPersistenceLib
+  PrintLib
+  ReportStatusCodeLib
+  MemoryAllocationLib
+  BaseLib
+  ShellLib
+  PcdLib
+  UefiLib
+  MuTelemetryHelperLib
+
+[Protocols]
+
+[Guids]
+  gEfiEventNotificationTypeBootGuid                                   ## CONSUMES
+  gMuTelemetrySectionTypeGuid                                         ## CONSUMES
+  gEfiHardwareErrorVariableGuid                                       ## CONSUMES
+  gMsWheaReportServiceGuid                                            ## CONSUMES
+  gMuTestLibraryGuid                                                  ## CONSUMES
+  gMuTestIhvSharedGuid                                                ## CONSUMES
+
+[FixedPcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdHwErrStorageSize                  ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxHardwareErrorVariableSize      ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize        ## CONSUMES
+  gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid                    ## CONSUMES
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaRSCHandlerTpl                     ## CONSUMES
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported

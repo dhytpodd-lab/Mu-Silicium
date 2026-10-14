@@ -1,0 +1,77 @@
+## @file -- MsWheaReportSmm.inf
+#
+#  MsWheaReportSmm implements Microsoft WHEA report service for SMM environment.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  PI_SPECIFICATION_VERSION       = 0x00010014
+  BASE_NAME                      = MsWheaReportSmm
+  FILE_GUID                      = 73103E54-C56A-4D5D-8A0B-B7934FC7C9FD
+  MODULE_TYPE                    = DXE_SMM_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = MsWheaReportTraditionalEntry
+
+#
+# The following information is for reference only and not required by the
+# build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  ../MsWheaReportCommon.h
+  ../MsWheaReportCommon.c
+  ../MsWheaEarlyStorageMgr.c
+  ../MsWheaEarlyStorageMgr.h
+  ../MsWheaEarlyStorageMgr.h
+  ../MsWheaReportHER.c
+  ../MsWheaReportHER.h
+  MsWheaReportMm.c
+  MsWheaReportMm.h
+  MsWheaReportTraditional.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  PcdLib
+  PrintLib
+  ReportStatusCodeLib
+  UefiDriverEntryPoint
+  MmServicesTableLib
+  MsWheaEarlyStorageLib
+
+[Protocols]
+  gEfiAcpiTableProtocolGuid           ## CONSUMES
+  gEfiMmRscHandlerProtocolGuid        ## CONSUMES
+  gEfiSmmVariableProtocolGuid         ## CONSUMES
+
+[Pcd]
+  gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareMaxCount
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxHardwareErrorVariableSize
+
+[Guids]
+  gEfiHardwareErrorVariableGuid       ## CONSUMES
+  gEfiEventExitBootServicesGuid       ## CONSUMES
+  gMuTelemetrySectionTypeGuid         ## CONSUMES
+  gMsWheaRSCDataTypeGuid              ## CONSUMES
+  gMsWheaReportServiceGuid            ## SOMETIMES_CONSUMES
+  gEfiEventNotificationTypeBootGuid   ## SOMETIMES_CONSUMES
+  gMsWheaReportRecordIDGuid           ## CONSUMES
+
+[Depex]
+  gEfiMmRscHandlerProtocolGuid AND
+  gEfiVariableWriteArchProtocolGuid AND
+  gEfiSmmVariableProtocolGuid

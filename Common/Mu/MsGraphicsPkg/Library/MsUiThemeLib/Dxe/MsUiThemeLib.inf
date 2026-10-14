@@ -1,0 +1,46 @@
+## @file
+#  MsUiThemeLib.inf
+#
+#  Description:    Supplies the theme for this platform to the UEFI settings UI
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MsUiThemeLib
+  FILE_GUID                      = bbcd73b4-b796-4d4a-b927-334dd8adf502
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MsUiThemeLib|DXE_DRIVER UEFI_APPLICATION DXE_RUNTIME_DRIVER UEFI_DRIVER
+  CONSTRUCTOR                    = MsUiThemeLibConstructor
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+ MsUiThemeLib.c
+ ../MsUiThemeLibCommon.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiBootServicesTableLib
+
+[Protocols]
+    gMsUiThemeProtocolGuid
+
+[Guids]
+
+[Depex]
+    gMsUiThemeProtocolGuid
+
+[BuildOptions]
+
+

@@ -1,0 +1,124 @@
+##
+# CI configuration for MsGraphicsPkg
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+    "PrEval": {
+        "DscPath": "MsGraphicsPkg.dsc",
+    },
+    ## options defined ci/Plugin/CompilerPlugin
+    "CompilerPlugin": {
+        "DscPath": "MsGraphicsPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/CharEncodingCheck
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+
+    ## options defined ci/Plugin/DependencyCheck
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "ShellPkg/ShellPkg.dec",
+            "MsGraphicsPkg/MsGraphicsPkg.dec",
+            "MsCorePkg/MsCorePkg.dec"
+        ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        "AcceptableDependencies-UEFI_APPLICATION": [
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        "IgnoreInf": []
+    },
+
+    ## options defined ci/Plugin/DscCompleteCheck
+    "DscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "MsGraphicsPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/GuidCheck
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [
+            "BCA42A0C-0A80-4D51-A2EE-430BEC2230DD", #GUID duplicated in DfciPkg
+            "A56178B0-57A3-42D4-AC05-F2EBB588B876", #GUID duplicated in DfciPkg
+        ],
+        "IgnoreFoldersAndFiles": [],
+        "IgnoreDuplicates": []
+    },
+
+    ## options defined ci/Plugin/LibraryClassCheck
+    "LibraryClassCheck": {
+        "IgnoreLibraryClass": [],
+        "IgnoreHeaderFile": []
+    },
+
+    ## options defined ci/Plugin/SpellCheck
+    "SpellCheck": {
+        # Fails test but run in AuditOnly mode to collect log
+        "AuditOnly": true,
+        "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
+        ],
+        "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
+        ],
+        "ExtendWords": [           # words to extend to the dictionary for this package
+            "blits",
+            "okcancel",
+            "blitting",
+            "idcancel",
+            "idcontinue",
+            "idignore",
+            "idrestart",
+            "idretry",
+            "idtryagain",
+            "idyes",
+            "mframe",
+            "mschange",
+            "mslogo",
+            "pytools",
+            "qrencoder",
+            "qrencoding",
+            "qrlevel",
+            "osk's",
+            "selawik",
+            "swmdialogs",
+            "undock",
+            "undocked",
+            "yesno",
+            "Jndex",
+            "FCANVAS",
+            "cat'ing",
+            "shiftn",
+            "winjs",
+            "Segmatize",
+            "uirect",
+            "lavel",
+            "Thonky",
+            "UITSWM",
+            "STEADYST",
+            "Xstart",
+            "dialog's",
+            "reprompt",
+            "glyph's",
+            "bitmap",
+            "pixed",
+            "xform",
+            "rotex",
+            "rotey",
+            "rotez",
+            "xformed",
+            "fltused",
+            "Splitter's",
+            "urface",
+            "IFR's",
+            "brower", ## TO BE REMOVED ONCE MU_BASECORE has all spelling mistakes fixed for gEfiMdeModulePkgTokenSpaceGuid.PcdBrowerGrayOutReadOnlyMenu
+        ],
+        "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
+    }
+}

@@ -1,0 +1,59 @@
+## @file MuVarPolicyFoundationDxe.inf
+# This DXE driver will publish policies and state variables to support a couple of different design patterns:
+# - Locking policies and performing other tests based on whether a DXE phase has passed
+#     - EndOfDxe
+#     - ReadyToBoot
+#     - ExitBootServices
+# - Setting up a reference variable that can only be written once that can be used in other variable policies
+#
+##
+# Copyright (C) Microsoft Corporation. All rights reserved.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MuVarPolicyFoundationDxe
+  FILE_GUID           = 8C7DB881-DA76-4486-8654-8152EE3470A3
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  ENTRY_POINT         = MuVarPolicyFoundationDxeMain
+
+
+[Sources]
+  MuVarPolicyFoundationDxe.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  MemoryAllocationLib
+  UefiDriverEntryPoint
+  BaseMemoryLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  VariablePolicyHelperLib
+
+
+[Protocols]
+  gEdkiiVariablePolicyProtocolGuid                ## CONSUMES # Used to register the DXE Phase Variable protection policy.
+
+
+[Guids]
+  gMuVarPolicyDxePhaseGuid                        ## CONSUMES ## GUID ## Variable namespace
+  gMuVarPolicyWriteOnceStateVarGuid               ## CONSUMES ## GUID ## Variable namespace
+  gEfiEndOfDxeEventGroupGuid                      ## CONSUMES ## EVENT ## EndOfDxe Event Group
+  gEfiEventReadyToBootGuid                        ## CONSUMES ## EVENT ## ReadyToBoot Event Group
+  gEfiEventExitBootServicesGuid                   ## CONSUMES ## EVENT ## ExitBootServices Event Group
+
+
+[Depex]
+  gEfiVariableArchProtocolGuid AND
+  gEdkiiVariablePolicyProtocolGuid

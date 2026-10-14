@@ -1,0 +1,37 @@
+##
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = TpmEventLogAuditTestApp
+  FILE_GUID                      = 7CD1FBCA-1381-48AB-B0BA-C3C66811C0DD
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UefiTestApp
+
+[Sources]
+  TpmEventLogAudit.c
+  TpmEventLogXml.c
+  TpmEventLogXml.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  ShellPkg/ShellPkg.dec
+  SecurityPkg/SecurityPkg.dec
+  XmlSupportPkg/XmlSupportPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  UefiApplicationEntryPoint
+  DebugLib
+  ShellLib
+  UefiBootServicesTableLib
+  BaseMemoryLib
+  Tpm2HelpLib
+  XmlTreeLib
+  XmlTreeQueryLib
+
+[Protocols]
+  gEfiTcg2ProtocolGuid

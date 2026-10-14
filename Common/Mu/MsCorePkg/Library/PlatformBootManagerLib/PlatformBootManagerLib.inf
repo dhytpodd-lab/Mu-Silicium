@@ -1,0 +1,84 @@
+/** @file
+ *PlatformBootManager  - Ms Extensions to BdsDxe.
+
+Copyright (C) Microsoft Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+
+[Defines]
+INF_VERSION                    = 0x00010018
+BASE_NAME                      = PlatformBootManagerLib
+FILE_GUID                      = df8f3324-5448-46bc-872c-be198ecf2f76
+VERSION_STRING                 = 1.0
+MODULE_TYPE                    = DXE_DRIVER
+UEFI_SPECIFICATION_VERSION     = 2.7
+LIBRARY_CLASS                  = PlatformBootManagerLib|DXE_DRIVER
+CONSTRUCTOR                    = PlatformBootManagerEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 EBC
+#
+
+[Sources]
+  BdsPlatform.c
+  BdsPlatform.h
+  MemoryTest.c
+  MsPlatform.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  SecurityPkg/SecurityPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  CapsuleLib
+  DebugLib
+  DeviceBootManagerLib
+  DevicePathLib
+  DxeServicesTableLib
+  HobLib
+  MemoryAllocationLib
+  PcdLib
+  PerformanceLib
+  UefiBootManagerLib
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeServicesTableLib
+
+[Protocols]
+  gEfiPciRootBridgeIoProtocolGuid     ## CONSUMES
+  gEfiDxeSmmReadyToLockProtocolGuid   ## PRODUCES
+  gEfiGenericMemTestProtocolGuid      ## CONSUMES
+  gEfiAbsolutePointerProtocolGuid     ## CONSUMES
+
+[Guids]
+  gEfiCapsuleVendorGuid
+  gEfiEndOfDxeEventGroupGuid
+  gEfiGlobalVariableGuid
+  gEfiMemoryOverwriteControlDataGuid
+  gMuReadyToProcessCapsulesNotifyGuid ## PRODUCES
+
+[FeaturePcd]
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConInConnectOnDemand
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow
+  gEfiMdeModulePkgTokenSpaceGuid.PcdTestKeyUsed
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution
+  gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType
+
+[Depex.common.DXE_DRIVER]
+  gEfiVariableArchProtocolGuid
+
+#[BuildOptions]
+#  MSFT:*_*_*_CC_FLAGS  = /FAcs

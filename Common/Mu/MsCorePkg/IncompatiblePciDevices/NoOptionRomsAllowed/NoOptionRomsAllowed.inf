@@ -1,0 +1,50 @@
+## @file
+# NoOptionRomsAllowed.inf
+#
+# This module publishes an IncompatiblePciDevices protocol to prohibit
+# PciBusDxe from loading *ANY* Option Roms through the device's ROM BAR.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = NoOptionRomsAllowed
+  FILE_GUID                      = 11b78d6d-d0e5-418b-8013-668c2aae8d99
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = NoOptionRomsAllowedEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  NoOptionRomsAllowed.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gEfiIncompatiblePciDeviceSupportProtocolGuid
+
+[Pcd]
+
+[Guids]
+
+[Depex]
+  TRUE
+
+[BuildOptions]
+   DEBUG_GCC5_*_CC_FLAGS  = -Wno-missing-braces

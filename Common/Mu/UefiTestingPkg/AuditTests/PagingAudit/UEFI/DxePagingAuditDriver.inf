@@ -1,0 +1,78 @@
+## @file DxePagingAuditDriver.inf
+# This DXE Driver writes page table and memory map information to SFS when triggered
+# by an event.
+#
+##
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = DxePagingAuditDriver
+  FILE_GUID           = 8C8CEAB1-6062-4777-BD21-7A1C034EF034
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  ENTRY_POINT         = PagingAuditDriverEntryPoint
+
+
+[Sources]
+  Dxe/Driver/DxePagingAuditDriver.c
+  PagingAuditCommon.c
+  PagingAuditCommon.h
+
+
+[Sources.X64]
+  X64/PagingAuditProcessor.c
+
+[Sources.AARCH64]
+  AArch64/PagingAuditProcessor.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  UefiTestingPkg/UefiTestingPkg.dec
+
+[Packages.AARCH64]
+  ArmPkg/ArmPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  PrintLib
+  DebugLib
+  UefiBootServicesTableLib
+  UefiLib
+  PeCoffGetEntryPointLib
+  HobLib
+  DxeServicesTableLib
+  DxeMemoryProtectionHobLib
+
+[LibraryClasses.AARCH64]
+  ArmLib
+
+[LibraryClasses.X64]
+  CpuLib
+
+[Guids]
+  gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
+  gEfiMemoryAttributesTableGuid
+  gEfiEventBeforeExitBootServicesGuid
+  gEfiHobMemoryAllocStackGuid                   ## SOMETIMES_CONSUMES   ## SystemTable
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gMemoryProtectionDebugProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid
+  gCpuMpDebugProtocolGuid
+  gEfiMemoryAttributeProtocolGuid
+
+[Protocols.X64]
+  gEfiSmmBase2ProtocolGuid
+
+[FixedPcd]
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES
+
+[Depex]
+  gEfiSimpleFileSystemProtocolGuid

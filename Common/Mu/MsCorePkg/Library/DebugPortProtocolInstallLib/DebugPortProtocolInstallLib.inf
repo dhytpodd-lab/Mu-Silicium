@@ -1,0 +1,39 @@
+## @file
+# Library used to install debug port protocol
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DebugPortProtocolInstallLib
+  FILE_GUID                      = b7dc3fdb-9937-41ef-bfc1-6050903925ee
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = DebugPortProtocolInstallLib|DXE_CORE
+  CONSTRUCTOR                    = InstallDebugPortProtocol
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64 ARM
+#
+
+[Sources]
+  DebugPortProtocolInstallLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  BaseLib
+  DebugLib
+
+[Protocols]
+  gEfiDebugPortProtocolGuid                     ## PRODUCES
+
+[Depex]
+  TRUE

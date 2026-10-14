@@ -1,0 +1,58 @@
+## @file
+#  SimpleUIToolKit.inf
+#
+#  Description:    Simple UI Toolkit (SUIT) library comprised of various UI elements that can be
+#                  used to draw user interfaces in the DXE environment.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UIToolKitLib
+  FILE_GUID                      = 4042708A-0F2D-4823-AC60-0D77B311188A
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = UIToolKitLib|DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  Bitmap.c
+  Button.c
+  Canvas.c
+  EditBox.c
+  Grid.c
+  Label.c
+  ListBox.c
+  ProgressBar.c
+  SimpleUIToolKit.c
+  ToggleSwitch.c
+  Utilities.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseMemoryLib
+  MathLib
+  MsUiThemeLib
+  PcdLib
+  FltUsedLib
+
+[Protocols]
+  gMsOSKProtocolGuid
+
+[Guids]
+
+[Pcd]
+  gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid
+
+[BuildOptions]

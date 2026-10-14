@@ -1,0 +1,42 @@
+// *++
+//
+// Strings for Simple Window Manager
+//
+// Copyright (C) Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+// --*/
+
+#langdef   en-US " English "
+#langdef   fr-FR " Français "
+#langdef   ja-JP "\wide 日本語 "
+
+#langdef   en    " Standard English "
+#langdef   fr    " Standard Français "
+#langdef   ja    "\wide 日本語 "
+
+////////////////////////////////////////////////////////////////////////////////////
+// Generic Strings
+//
+#string STR_NULL_STRING             #language en-US  ""
+                                    #language ja-JP  ""
+
+#string STR_GENERIC_YES_STRING      #language en-US  "Yes"
+                                    #language ja-JP  "Yes"      ## TODO
+
+#string STR_GENERIC_NO_STRING       #language en-US  "No"
+                                    #language ja-JP  "No"       ## TODO
+
+#string STR_GENERIC_OK_STRING       #language en-US  "Ok"
+                                    #language ja-JP  "Ok"       ## TODO
+
+#string STR_GENERIC_CANCEL_STRING   #language en-US  "Cancel"
+                                    #language ja-JP  "Cancel"   ## TODO
+
+#string STR_GENERIC_RETRY_STRING    #language en-US  "Retry"
+                                    #language ja-JP  "Retry"    ## TODO
+
+#string STR_GENERIC_NEXT_STRING     #language en-US  "Next"
+                                    #language ja-JP  "Next"     ## TODO
+
+#string STR_GENERIC_RESTART_STRING  #language en-US  "Restart now"
+                                    #language ja-JP  "Restart now"  ## TODO

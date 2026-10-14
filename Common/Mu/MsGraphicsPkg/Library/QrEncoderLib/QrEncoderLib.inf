@@ -1,0 +1,46 @@
+## @file
+# QrEncoderLib.inf
+#
+# QrEncoderLib is used to generate a QrCode Bitmap image from data supplied by the caller
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = QrEncoderLib
+  FILE_GUID           = c6ce36c9-2953-4239-a082-8c2235a1f3c2
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  LIBRARY_CLASS       = QrEncoderLib|DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = ANY
+#
+
+
+[Sources]
+  QrEncoderLib.c
+  QrEncoderTables.c
+  QrEncoderTables.h
+
+[Packages]
+  MsGraphicsPkg/MsGraphicsPkg.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+
+[Protocols]
+
+[Guids]
+
+[Depex]
+  TRUE

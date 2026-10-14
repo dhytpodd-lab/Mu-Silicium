@@ -1,0 +1,12 @@
+// /** @file
+// This Package provides all definitions, library classes and libraries instances for MsGraphics.
+// MsGraphics is common code used in the Microsoft UEFI Core code base
+//
+// Copyright (C) Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+// **/
+
+
+#string STR_PACKAGE_ABSTRACT            #language en-US "This Package provides all definitions, library classes and libraries instances for MsGraphics."
+
+#string STR_PACKAGE_DESCRIPTION         #language en-US "MsGraphics is common code used in the Microsoft UEFI Core code base"

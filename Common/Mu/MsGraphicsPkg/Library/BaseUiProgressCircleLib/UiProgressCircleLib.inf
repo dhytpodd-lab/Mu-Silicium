@@ -1,0 +1,34 @@
+## @file
+#  A Library that supports drawing a Circle/Donut UI element.
+#  Support for both progress 1-100 or indeterminate
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UiProgressCircleLib
+  FILE_GUID                      = DBCB03A1-50C6-4668-BF93-8D99525B7C72
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS					         = UiProgressCircleLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  ProgressCircle.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+
+[LibraryClasses]
+  DebugLib
+  MemoryAllocationLib
+  BaseMemoryLib

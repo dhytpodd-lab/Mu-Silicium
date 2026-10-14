@@ -1,0 +1,36 @@
+##
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = BlockIoPerfTest
+  FILE_GUID                      = af87df79-d69d-4759-a7cb-124115a349cd
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = TestMain
+
+[Sources]
+  BlockIoPerfTest.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  ShellPkg/ShellPkg.dec
+  XmlSupportPkg/XmlSupportPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  UefiApplicationEntryPoint
+  DebugLib
+  ShellLib
+  UefiBootServicesTableLib
+  BaseMemoryLib
+  TimerLib
+  MemoryAllocationLib
+  UefiLib
+  DevicePathLib
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiDevicePathProtocolGuid
