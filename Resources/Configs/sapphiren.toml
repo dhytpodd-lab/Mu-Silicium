@@ -22,4 +22,4 @@ append_dtb         = true
 # Android Boot Image Configs
 #
 [boot_image]
-header_version = 4
+header_version = 1
