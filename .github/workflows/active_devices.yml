@@ -23,6 +23,7 @@ on:
       - 'Silicium-ACPI'
 env:
   CI_BUILD: true
+  EDK_TOOLS_PATH: ${{ github.workspace }}/Mu_Basecore/BaseTools
 jobs:
   build:
     runs-on: ubuntu-24.04

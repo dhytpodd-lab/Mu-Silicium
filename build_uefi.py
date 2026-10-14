@@ -429,6 +429,9 @@ def main ():
     # Parse Script Arguments
     ctx = parse_arguments ()
 
+    # Set EDK Tools Path
+    os.environ["EDK_TOOLS_PATH"] = str ((MU_BASECORE_PATH / "BaseTools").resolve ())
+
     # Get Device Package Path
     device_package_path = get_device_package_path (ctx.device)
     if device_package_path is None:

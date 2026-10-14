@@ -138,6 +138,7 @@ class PlatformBuilder (UefiBuilder, BuildSettingsManager):
         logging.debug ("PlatformBuilder SetPlatformEnv")
 
         self.env.SetValue ("PRODUCT_NAME", "sapphiren", "Platform Hardcoded")
+        self.env.SetValue ("EDK_TOOLS_PATH", os.path.join(self.GetWorkspaceRoot(), "Mu_Basecore", "BaseTools"), "Platform Hardcoded")
         self.env.SetValue ("ACTIVE_PLATFORM", "sapphirenPkg/sapphiren.dsc", "Platform Hardcoded")
         self.env.SetValue ("TARGET_ARCH", "AARCH64", "Platform Hardcoded")
         self.env.SetValue ("TOOL_CHAIN_TAG", "CLANGPDB", "set default to clangpdb")
