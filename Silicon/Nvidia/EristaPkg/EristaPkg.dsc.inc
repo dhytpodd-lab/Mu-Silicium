@@ -1,0 +1,64 @@
+##
+#  Copyright (c) 2011 - 2022, ARM Limited. All rights reserved.
+#  Copyright (c) 2014, Linaro Limited. All rights reserved.
+#  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.
+#  Copyright (c) 2018, Bingxing Wang. All rights reserved.
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  #
+  # Timer
+  #
+  USE_PHYSICAL_TIMER                         = 1
+
+!include NvidiaPkg/NvidiaPkg.dsc.inc
+
+[BuildOptions]
+  *_*_AARCH64_CC_FLAGS = -march=armv8-a+crypto+rcpc -mtune=cortex-a57
+
+[PcdsFixedAtBuild]
+  #
+  # ACPI
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId|0x2020415453495245
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemRevision|0x00000210
+
+  #
+  # CPU
+  #
+  gArmPlatformTokenSpaceGuid.PcdCoreCount|4
+  gArmPlatformTokenSpaceGuid.PcdClusterCount|1
+
+  #
+  # GIC
+  #
+  gArmTokenSpaceGuid.PcdGicDistributorBase|0x50041000
+  gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase|0x50042000
+
+  #
+  # SMBIOS
+  #
+!if $(SOC_TYPE) == 4
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorModel|"Tegra (TM) X1 @ 1.40 GHz"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumber|"TM660M-A2"
+!else
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorModel|"Tegra (TM) X1 @ 2.20 GHz"
+!if $(SOC_TYPE) == 0
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumber|"ODNX02-A2"
+!elseif $(SOC_TYPE) == 1
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumber|"TM670D-A1"
+!elseif $(SOC_TYPE) == 2
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumber|"TM670M-A2"
+!elseif $(SOC_TYPE) == 3
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumber|"TM671D-A2"
+!endif
+!endif
+
+[LibraryClasses]
+  #
+  # SEC Libraries
+  #
+  PlatformSecLib|EristaPkg/Library/PlatformSecLib/PlatformSecLib.inf

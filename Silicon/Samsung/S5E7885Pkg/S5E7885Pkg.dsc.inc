@@ -1,0 +1,73 @@
+##
+#  Copyright (c) 2011 - 2022, ARM Limited. All rights reserved.
+#  Copyright (c) 2014, Linaro Limited. All rights reserved.
+#  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.
+#  Copyright (c) 2018, Bingxing Wang. All rights reserved.
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  #
+  # Timer
+  #
+  USE_PHYSICAL_TIMER                         = 0
+
+  #
+  # KEP
+  #
+  HAS_CNTFRQ_EL0_EMPTY_ERRATA                = 0
+
+!include SamsungPkg/SamsungPkg.dsc.inc
+
+[BuildOptions]
+  *_*_AARCH64_CC_FLAGS = -march=armv8-a+crypto+rcpc
+
+[PcdsFixedAtBuild]
+  #
+  # ACPI
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId|0x2035383837453553
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemRevision|0x7885
+
+  #
+  # CPU
+  #
+  gArmPlatformTokenSpaceGuid.PcdCoreCount|8
+  gArmPlatformTokenSpaceGuid.PcdClusterCount|2
+
+  #
+  # GIC
+  #
+  gArmTokenSpaceGuid.PcdGicDistributorBase|0x12301000
+  gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase|0x12302000
+
+  #
+  # GPIO
+  # List Contents: 0x11CB0000, 0x13430000, 0x139B0000, 0x148F0000
+  #
+  gSamsungPkgTokenSpaceGuid.PcdGpioCtrlAddr|{ 0x00, 0x00, 0xCB, 0x11, 0x00, 0x00, 0x43, 0x13, 0x00, 0x00, 0x9B, 0x13, 0x00, 0x00, 0x8F, 0x14 }
+
+  #
+  # SPEEDY
+  # List Contents: 0x11CE0000
+  #
+  gSamsungPkgTokenSpaceGuid.PcdSpeedyBusAddr|{ 0x00, 0x00, 0xCE, 0x11 }
+
+  #
+  # SMBIOS
+  #
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorModel|"Exynos (TM) 7885 @ 2.20 GHz"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumber|"S5E7885"
+
+[LibraryClasses]
+  #
+  # SEC Libraries
+  #
+  PlatformSecLib|S5E7885Pkg/Library/PlatformSecLib/PlatformSecLib.inf
+
+  #
+  # IO Libraries
+  #
+  GpioBankLib|S5E7885Pkg/Library/GpioBankLib/GpioBankLib.inf

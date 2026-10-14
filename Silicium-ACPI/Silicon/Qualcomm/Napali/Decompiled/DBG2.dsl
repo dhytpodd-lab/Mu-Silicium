@@ -1,0 +1,174 @@
+/*
+ * Intel ACPI Component Architecture
+ * AML/ASL+ Disassembler version 20230628 (32-bit version)
+ * Copyright (c) 2000 - 2023 Intel Corporation
+ * 
+ * Disassembly of DBG2.aml
+ *
+ * ACPI Data Table [DBG2]
+ *
+ * Format: [HexOffset DecimalOffset ByteLength]  FieldName : FieldValue (in hex)
+ */
+
+[000h 0000 004h]                   Signature : "DBG2"    [Debug Port Table type 2]
+[004h 0004 004h]                Table Length : 00000246
+[008h 0008 001h]                    Revision : 01
+[009h 0009 001h]                    Checksum : 00     /* Incorrect checksum, should be 52 */
+[00Ah 0010 006h]                      Oem ID : "QCOM  "
+[010h 0016 008h]                Oem Table ID : "QCOMEDK2"
+[018h 0024 004h]                Oem Revision : 00000845
+[01Ch 0028 004h]             Asl Compiler ID : "QCOM"
+[020h 0032 004h]       Asl Compiler Revision : 00000001
+
+[024h 0036 004h]                 Info Offset : 0000002C
+[028h 0040 004h]                  Info Count : 00000003
+
+[02Ch 0044 001h]                    Revision : 01
+[02Dh 0045 002h]                      Length : 0046
+[02Fh 0047 001h]              Register Count : 01
+[030h 0048 002h]             Namepath Length : 000A
+[032h 0050 002h]             Namepath Offset : 0026
+[034h 0052 002h]             OEM Data Length : 0000 [Optional field not present]
+[036h 0054 002h]             OEM Data Offset : 0000 [Optional field not present]
+[038h 0056 002h]                   Port Type : 8000
+[03Ah 0058 002h]                Port Subtype : 0011
+[03Ch 0060 002h]                    Reserved : 0000
+[03Eh 0062 002h]         Base Address Offset : 0016
+[040h 0064 002h]         Address Size Offset : 0022
+
+[042h 0066 00Ch]       Base Address Register : [Generic Address Structure]
+[042h 0066 001h]                    Space ID : 00 [SystemMemory]
+[043h 0067 001h]                   Bit Width : 20
+[044h 0068 001h]                  Bit Offset : 00
+[045h 0069 001h]        Encoded Access Width : 20 [Unknown Width Encoding]
+[046h 0070 008h]                     Address : 0000000000A84000
+
+[04Eh 0078 004h]                Address Size : 00001000
+
+[052h 0082 00Ah]                    Namepath : "\_SB.UARD"
+
+[072h 0114 001h]                    Revision : 01
+[073h 0115 002h]                      Length : 00EA
+[075h 0117 001h]              Register Count : 02
+[076h 0118 002h]             Namepath Length : 000A
+[078h 0120 002h]             Namepath Offset : 0036
+[07Ah 0122 002h]             OEM Data Length : 0094
+[07Ch 0124 002h]             OEM Data Offset : 0056
+[07Eh 0126 002h]                   Port Type : 8003
+[080h 0128 002h]                Port Subtype : 5143
+[082h 0130 002h]                    Reserved : 0000
+[084h 0132 002h]         Base Address Offset : 0016
+[086h 0134 002h]         Address Size Offset : 002E
+
+[088h 0136 00Ch]       Base Address Register : [Generic Address Structure]
+[088h 0136 001h]                    Space ID : 00 [SystemMemory]
+[089h 0137 001h]                   Bit Width : 20
+[08Ah 0138 001h]                  Bit Offset : 00
+[08Bh 0139 001h]        Encoded Access Width : 20 [Unknown Width Encoding]
+[08Ch 0140 008h]                     Address : 000000000A600000
+
+
+[094h 0148 00Ch]       Base Address Register : [Generic Address Structure]
+[094h 0148 001h]                    Space ID : 00 [SystemMemory]
+[095h 0149 001h]                   Bit Width : 20
+[096h 0150 001h]                  Bit Offset : 00
+[097h 0151 001h]        Encoded Access Width : 20 [Unknown Width Encoding]
+[098h 0152 008h]                     Address : 000000000A600000
+
+[0A0h 0160 004h]                Address Size : 000FFFFF
+[0A4h 0164 004h]                Address Size : 00001000
+
+[0A8h 0168 00Ah]                    Namepath : "\_SB.URS0"
+[0C8h 0200 094h]                    OEM Data : 44 42 47 32 46 02 00 00 01 00 51 43 4F 4D 20 20 /* DBG2F.....QCOM   */\
+/* 0D8h 0216  16 */                            51 43 4F 4D 45 44 4B 32 45 08 00 00 51 43 4F 4D /* QCOMEDK2E...QCOM */\
+/* 0E8h 0232  16 */                            01 00 00 00 2C 00 00 00 03 00 00 00 01 46 00 01 /* ....,........F.. */\
+/* 0F8h 0248  16 */                            0A 00 26 00 00 00 00 00 00 80 11 00 00 00 16 00 /* ..&............. */\
+/* 108h 0264  16 */                            22 00 00 20 00 20 00 40 A8 00 00 00 00 00 00 10 /* ".. . .@........ */\
+/* 118h 0280  16 */                            00 00 5C 5F 53 42 2E 55 41 52 44 00 00 00 00 00 /* ..\_SB.UARD..... */\
+/* 128h 0296  16 */                            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 /* ................ */\
+/* 138h 0312  16 */                            00 00 01 EA 00 02 0A 00 36 00 94 00 56 00 03 80 /* ........6...V... */\
+/* 148h 0328  16 */                            43 51 00 00 16 00 2E 00 00 20 00 20 00 00 60 0A /* CQ....... . ..`. */\
+/* 158h 0344   4 */                            00 00 00 00                                     /* .... */\
+
+[15Ch 0348 001h]                    Revision : 01
+[15Dh 0349 002h]                      Length : 00EA
+[15Fh 0351 001h]              Register Count : 02
+[160h 0352 002h]             Namepath Length : 000A
+[162h 0354 002h]             Namepath Offset : 0036
+[164h 0356 002h]             OEM Data Length : 0094
+[166h 0358 002h]             OEM Data Offset : 0056
+[168h 0360 002h]                   Port Type : 8003
+[16Ah 0362 002h]                Port Subtype : 5143
+[16Ch 0364 002h]                    Reserved : 0000
+[16Eh 0366 002h]         Base Address Offset : 0016
+[170h 0368 002h]         Address Size Offset : 002E
+
+[172h 0370 00Ch]       Base Address Register : [Generic Address Structure]
+[172h 0370 001h]                    Space ID : 00 [SystemMemory]
+[173h 0371 001h]                   Bit Width : 20
+[174h 0372 001h]                  Bit Offset : 00
+[175h 0373 001h]        Encoded Access Width : 20 [Unknown Width Encoding]
+[176h 0374 008h]                     Address : 000000000A800000
+
+
+[17Eh 0382 00Ch]       Base Address Register : [Generic Address Structure]
+[17Eh 0382 001h]                    Space ID : 00 [SystemMemory]
+[17Fh 0383 001h]                   Bit Width : 20
+[180h 0384 001h]                  Bit Offset : 00
+[181h 0385 001h]        Encoded Access Width : 20 [Unknown Width Encoding]
+[182h 0386 008h]                     Address : 000000000A800000
+
+[18Ah 0394 004h]                Address Size : 000FFFFF
+[18Eh 0398 004h]                Address Size : 00001000
+
+[192h 0402 00Ah]                    Namepath : "\_SB.USB1"
+[1B2h 0434 094h]                    OEM Data : 44 42 47 32 46 02 00 00 01 00 51 43 4F 4D 20 20 /* DBG2F.....QCOM   */\
+/* 1C2h 0450  16 */                            51 43 4F 4D 45 44 4B 32 45 08 00 00 51 43 4F 4D /* QCOMEDK2E...QCOM */\
+/* 1D2h 0466  16 */                            01 00 00 00 2C 00 00 00 03 00 00 00 01 46 00 01 /* ....,........F.. */\
+/* 1E2h 0482  16 */                            0A 00 26 00 00 00 00 00 00 80 11 00 00 00 16 00 /* ..&............. */\
+/* 1F2h 0498  16 */                            22 00 00 20 00 20 00 40 A8 00 00 00 00 00 00 10 /* ".. . .@........ */\
+/* 202h 0514  16 */                            00 00 5C 5F 53 42 2E 55 41 52 44 00 00 00 00 00 /* ..\_SB.UARD..... */\
+/* 212h 0530  16 */                            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 /* ................ */\
+/* 222h 0546  16 */                            00 00 01 EA 00 02 0A 00 36 00 94 00 56 00 03 80 /* ........6...V... */\
+/* 232h 0562  16 */                            43 51 00 00 16 00 2E 00 00 20 00 20 00 00 60 0A /* CQ....... . ..`. */\
+/* 242h 0578   4 */                            00 00 00 00                                     /* .... */\
+
+Raw Table Data: Length 582 (0x246)
+
+    0000: 44 42 47 32 46 02 00 00 01 00 51 43 4F 4D 20 20  // DBG2F.....QCOM  
+    0010: 51 43 4F 4D 45 44 4B 32 45 08 00 00 51 43 4F 4D  // QCOMEDK2E...QCOM
+    0020: 01 00 00 00 2C 00 00 00 03 00 00 00 01 46 00 01  // ....,........F..
+    0030: 0A 00 26 00 00 00 00 00 00 80 11 00 00 00 16 00  // ..&.............
+    0040: 22 00 00 20 00 20 00 40 A8 00 00 00 00 00 00 10  // ".. . .@........
+    0050: 00 00 5C 5F 53 42 2E 55 41 52 44 00 00 00 00 00  // ..\_SB.UARD.....
+    0060: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0070: 00 00 01 EA 00 02 0A 00 36 00 94 00 56 00 03 80  // ........6...V...
+    0080: 43 51 00 00 16 00 2E 00 00 20 00 20 00 00 60 0A  // CQ....... . ..`.
+    0090: 00 00 00 00 00 20 00 20 00 00 60 0A 00 00 00 00  // ..... . ..`.....
+    00A0: FF FF 0F 00 00 10 00 00 5C 5F 53 42 2E 55 52 53  // ........\_SB.URS
+    00B0: 30 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // 0...............
+    00C0: 00 00 00 00 00 00 00 00 05 00 00 00 32 58 49 46  // ............2XIF
+    00D0: 02 00 00 00 00 02 00 00 00 C7 00 00 F8 FF FF FF  // ................
+    00E0: 00 00 00 00 00 02 00 00 10 88 0F 00 00 00 00 00  // ................
+    00F0: 00 00 10 10 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0110: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0120: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0130: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0140: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0150: 00 00 00 00 00 00 00 00 43 42 53 55 01 EA 00 02  // ........CBSU....
+    0160: 0A 00 36 00 94 00 56 00 03 80 43 51 00 00 16 00  // ..6...V...CQ....
+    0170: 2E 00 00 20 00 20 00 00 80 0A 00 00 00 00 00 20  // ... . ......... 
+    0180: 00 20 00 00 80 0A 00 00 00 00 FF FF 0F 00 00 10  // . ..............
+    0190: 00 00 5C 5F 53 42 2E 55 53 42 31 00 00 00 00 00  // ..\_SB.USB1.....
+    01A0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    01B0: 00 00 05 00 00 00 32 58 49 46 02 00 00 00 00 02  // ......2XIF......
+    01C0: 00 00 00 C7 00 00 F8 FF FF FF 00 00 00 00 00 02  // ................
+    01D0: 00 00 10 88 0F 00 00 00 00 00 00 00 10 10 00 00  // ................
+    01E0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    01F0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0210: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0220: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  // ................
+    0230: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00  // ................
+    0240: 00 00 43 42 53 55                                // ..CBSU

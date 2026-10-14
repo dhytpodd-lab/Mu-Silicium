@@ -1,0 +1,43 @@
+## Firmware Info
+
+- Device: Xiaomi POCO F3
+- Region: Global
+- Version: `OS1.0.3.0.TKHMIXM` / `BOOT.XF.3.2-00304-SM8250-2`
+
+## Patches/Fixes
+
+### ButtonsDxe:
+
+- Reason: Helps navigating Menus (e.g. UEFI Menu)
+- Patch: Key code was patched for the power button to be mapped as ENTER instead of SUSPEND.
+- Patch Creator: [Gustave Monce](https://github.com/gus33000)
+
+### UsbConfigDxe:
+
+- Reason: Is Important to get USB working in Windows / Linux and UEFI.
+- Patch: Exit BootServices routine was patched to not deinit USB after exit boot services.
+- Patch Creator: [Gustave Monce](https://github.com/gus33000)
+
+### TzDxeLA:
+
+- Reason: The Common and Keymaster TZ Applets are already loaded, Also we don't have to notify TZ a second time where TZ applets will be loaded to
+- Patch: The global variable has been changed to 0x1 so function that notifies tz and loads applets is not called
+- Patch Creator: [N1kroks](https://github.com/N1kroks)
+
+### FeatureEnablerDxe:
+
+- Reason: The clock is already turned on, turning it on again will cause framebuffer lose
+- Patch: The function that enables clocks has been patched to always return Success.
+- Patch Creator: [N1kroks](https://github.com/N1kroks)
+
+### UsbMsdDxe:
+
+- Reason: To make the Internal Storage be recognised as Hard Drives instead of USB Drives in Mass Storage.
+- Patch: Changed Removable State to Non-Removable.
+- Patch Creator: [N1kroks](https://github.com/N1kroks)
+
+### DALSYSDxe:
+
+- Reason: To make the Internal Storage work with сache сoherency.
+- Patch: Changed CacheCoherency in \\_SB_.UFS0 Node to 1.
+- Patch Creator: [N1kroks](https://github.com/N1kroks)

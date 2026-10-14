@@ -1,0 +1,85 @@
+##
+#  Copyright (c) 2011 - 2022, ARM Limited. All rights reserved.
+#  Copyright (c) 2014, Linaro Limited. All rights reserved.
+#  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.
+#  Copyright (c) 2018, Bingxing Wang. All rights reserved.
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+################################################################################
+#
+# Defines Section - statements that will be processed to create a Makefile.
+#
+################################################################################
+[Defines]
+  PLATFORM_NAME                  = r8q
+  PLATFORM_GUID                  = 18B9BF87-E548-4B68-8150-25B0ACD6897A
+  PLATFORM_VERSION               = 0.1
+  DSC_SPECIFICATION              = 0x00010005
+  OUTPUT_DIRECTORY               = Build/r8qPkg
+  SUPPORTED_ARCHITECTURES        = AARCH64
+  BUILD_TARGETS                  = RELEASE|DEBUG
+  SKUID_IDENTIFIER               = DEFAULT
+  FLASH_DEFINITION               = r8qPkg/r8q.fdf
+  USE_CUSTOM_DISPLAY_DRIVER      = 0
+
+  #
+  # 0 = SM8250
+  # 1 = SM8250-AB
+  # 2 = SM8250-AC
+  #
+  SOC_TYPE                       = 0
+
+!include KonaPkg/KonaPkg.dsc.inc
+
+[PcdsFixedAtBuild]
+  #
+  # DDR Memory
+  #
+  gArmTokenSpaceGuid.PcdSystemMemoryBase|0x80000000
+
+  #
+  # UEFI Stack
+  #
+  gArmPlatformTokenSpaceGuid.PcdCPUCoresStackBase|0x9FF90000
+  gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize|0x40000
+
+  #
+  # SMBIOS
+  #
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemManufacturer|"Samsung"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemRetailModel|"r8q"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemModel|"Galaxy S20 FE"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemRetailSku|"Galaxy_S20_FE_r8q"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemBoardModel|"Galaxy S20 FE"
+
+  #
+  # Simple Frame Buffer
+  #
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferWidth|1080
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferHeight|2400
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferColorDepth|32
+
+  #
+  # Platform PEI
+  #
+  gQcomPkgTokenSpaceGuid.PcdPlatformType|"LA"
+
+[LibraryClasses]
+  #
+  # Memory Libraries
+  #
+  MemoryMapLib|r8qPkg/Library/MemoryMapLib/MemoryMapLib.inf
+
+  #
+  # QCOM Libraries
+  #
+  ConfigurationMapLib|r8qPkg/Library/ConfigurationMapLib/ConfigurationMapLib.inf
+
+[Components]
+  #
+  # ACPI Tables
+  #
+  #r8q/AcpiTables.inf

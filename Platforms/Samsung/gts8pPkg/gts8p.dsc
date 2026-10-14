@@ -1,0 +1,78 @@
+##
+#  Copyright (c) 2011 - 2022, ARM Limited. All rights reserved.
+#  Copyright (c) 2014, Linaro Limited. All rights reserved.
+#  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.
+#  Copyright (c) 2018, Bingxing Wang. All rights reserved.
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+################################################################################
+#
+# Defines Section - statements that will be processed to create a Makefile.
+#
+################################################################################
+[Defines]
+  PLATFORM_NAME                  = gts8p
+  PLATFORM_GUID                  = 544F9C45-6010-4AA3-8355-51FFC240D2DB
+  PLATFORM_VERSION               = 0.1
+  DSC_SPECIFICATION              = 0x00010005
+  OUTPUT_DIRECTORY               = Build/gts8pPkg
+  SUPPORTED_ARCHITECTURES        = AARCH64
+  BUILD_TARGETS                  = RELEASE|DEBUG
+  SKUID_IDENTIFIER               = DEFAULT
+  FLASH_DEFINITION               = gts8pPkg/gts8p.fdf
+  USE_CUSTOM_DISPLAY_DRIVER      = 1
+
+!include WaipioPkg/WaipioPkg.dsc.inc
+
+[PcdsFixedAtBuild]
+  #
+  # DDR Memory
+  #
+  gArmTokenSpaceGuid.PcdSystemMemoryBase|0x80000000
+
+  #
+  # UEFI Stack
+  #
+  gArmPlatformTokenSpaceGuid.PcdCPUCoresStackBase|0xA760D000
+  gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize|0x40000
+
+  #
+  # SMBIOS
+  #
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemManufacturer|"Samsung"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemModel|"Galaxy Tab S8+ 5G"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemRetailModel|"gts8p"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemRetailSku|"Galaxy_Tab_S8+_5G_gts8p"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosSystemBoardModel|"Galaxy Tab S8+ 5G"
+
+  #
+  # Simple Frame Buffer
+  #
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferWidth|2800
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferHeight|1752
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferColorDepth|32
+
+  #
+  # Platform PEI
+  #
+  gQcomPkgTokenSpaceGuid.PcdPlatformType|"WP"
+
+[LibraryClasses]
+  #
+  # Memory Libraries
+  #
+  MemoryMapLib|gts8pPkg/Library/MemoryMapLib/MemoryMapLib.inf
+
+  #
+  # QCOM Libraries
+  #
+  ConfigurationMapLib|gts8pPkg/Library/ConfigurationMapLib/ConfigurationMapLib.inf
+
+[Components]
+  #
+  # ACPI Tables
+  #
+  gts8p/AcpiTables.inf

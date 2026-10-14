@@ -1,0 +1,8 @@
+# Ignore build directory
+/Build/
+
+# Ignore external dependencies
+*_extdep/
+UnitTestFrameworkPkg/Library/SubhookLib/
+# Ignore libspdm submodule
+/SecurityPkg/DeviceSecurity/SpdmLib/libspdm

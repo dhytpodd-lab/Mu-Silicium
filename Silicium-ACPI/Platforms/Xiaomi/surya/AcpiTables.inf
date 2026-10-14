@@ -1,0 +1,19 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AcpiTables
+  FILE_GUID                      = 7E374E25-8E01-4FEE-87F2-390C23C606CD
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+
+[Binaries]
+  ASL|DSDT.aml
+  ASL|Common/SSDT.aml
+  ASL|Moorea/APIC.aml
+  ASL|Moorea/CSRT.aml
+  ASL|Moorea/DBG2.aml
+  ASL|Moorea/FACP.aml
+  ASL|Moorea/FACS.aml
+  ASL|Moorea/GTDT.aml
+  ASL|Moorea/IORT.aml
+  ASL|Moorea/MCFG.aml
+  ASL|Moorea/PPTT.aml

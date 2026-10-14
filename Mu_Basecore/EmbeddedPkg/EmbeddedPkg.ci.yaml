@@ -1,0 +1,156 @@
+## @file
+# Core CI configuration for EmbeddedPkg
+#
+# Copyright (c) Microsoft Corporation
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+    "PrEval": {
+        "DscPath": "EmbeddedPkg.dsc",
+    },
+    ## options defined .pytool/Plugin/LicenseCheck
+    "LicenseCheck": {
+        "IgnoreFiles": []
+    },
+
+    "EccCheck": {
+        ## Exception sample looks like below:
+        ## "ExceptionList": [
+        ##     "<ErrorID>", "<KeyWord>"
+        ## ]
+        "ExceptionList": [
+            "1008", "Bălănică"
+        ],
+        ## Both file path and directory path are accepted.
+        "IgnoreFiles": []
+    },
+
+    ## options defined .pytool/Plugin/CompilerPlugin
+    "CompilerPlugin": {
+        "DscPath": "EmbeddedPkg.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "" # Don't support this test
+    },
+
+    ## options defined .pytool/Plugin/CharEncodingCheck
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+
+    ## options defined ci/Plugin/DependencyCheck
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            # "ArmPkg/ArmPkg.dec",                  # MU_CHANGE
+            # "ArmPlatformPkg/ArmPlatformPkg.dec",  # MU_CHANGE
+            "EmbeddedPkg/EmbeddedPkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "MdePkg/MdePkg.dec"
+        ],
+        # For host based unit tests
+        "AcceptableDependencies-HOST_APPLICATION":[
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        # For UEFI shell based apps
+        "AcceptableDependencies-UEFI_APPLICATION":[],
+        "IgnoreInf": []
+    },
+
+    ## options defined .pytool/Plugin/DscCompleteCheck
+    "DscCompleteCheck": {
+        "skip": True,       # MU_CHANGE
+        "IgnoreInf": [""],
+        "DscPath": ""  # Don't support this test
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [""],
+        "DscPath": "" # Don't support this test
+    },
+
+    ## options defined .pytool/Plugin/GuidCheck
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": [],
+        "IgnoreDuplicates": [],
+    },
+
+    ## options defined .pytool/Plugin/LibraryClassCheck
+    "LibraryClassCheck": {
+        "skip": True,           # MU_CHANGE
+        "IgnoreHeaderFile": []
+    },
+
+    ## options defined .pytool/Plugin/SpellCheck
+    "SpellCheck": {
+        "AuditOnly": True,           # Fails right now with over 270 errors
+        "IgnoreFiles": [],           # use gitignore syntax to ignore errors in matching files
+        "ExtendWords": [
+            "ebadbufsize",
+            "qXfer",
+            "Packetq", #cspell is confused from PacketqXfer
+            "rwatch",
+            "awatch",
+            "e_lfanew",
+            "ralloc",
+            "Intialize", # Is misspelled in a library function
+            "libfdt",
+            "ncells",
+            "badncells",
+            "phandle",
+            "phandles",
+            "badphandle",
+            "nnode",
+            "namep",
+            "pdepth",
+            "atdepth",
+            "fdtstart",
+            "fdtend",
+            "txrdy",
+            "atmel",
+            "gigadevice",
+            "stmicro",
+            "jedec",
+            "hisilicon",
+            "vtutf",
+            "ioblocks",
+            "blkio",
+            "ismultiblock",
+            "readbllen",
+            "writebllen",
+            "powerup",
+            "emmcbackward",
+            "emmchs",
+            "udriver",
+            "eunknown",
+            "strsz",
+            "ffset",
+            "mpidr",
+            "abootimg", #android boot image
+            "Maxium", # Typo in a library header function
+            "Lenght", # Typo in a library header function
+            "eoi'ed",
+            "isreadonly",
+            "stdby",
+            "tcase",
+            "mgmnt",
+            "bkops",
+            "ddisable",
+            "Lauterbach",
+            "taggs",
+        ],           # words to extend to the dictionary for this package
+        "IgnoreStandardPaths": [],   # Standard Plugin defined paths that should be ignore
+        "AdditionalIncludePaths": [] # Additional paths to spell check (wildcards supported)
+    },
+
+    ## options defined .pytool/Plugin/MarkdownLintCheck
+    "MarkdownLintCheck": {
+        "AuditOnly": True,           # If True, log all errors and then mark as skipped
+        "IgnoreFiles": []            # package root relative file, folder, or glob pattern to ignore
+    }
+}

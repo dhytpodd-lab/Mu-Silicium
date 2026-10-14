@@ -1,0 +1,128 @@
+## @file
+# CI configuration for CryptoPkg
+#
+# Copyright (c) Microsoft Corporation
+# Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+    "PrEval": {
+        "DscPath": "CryptoPkg.dsc",
+    },
+    "LicenseCheck": {
+        # MU_CHANGE - Start - Move to OneCrypto
+        "IgnoreFiles": []
+        # MU_CHANGE - End - Move to OneCrypto
+    },
+    "EccCheck": {
+        ## Exception sample looks like below:
+        ## "ExceptionList": [
+        ##     "<ErrorID>", "<KeyWord>"
+        ## ]
+        "ExceptionList": [
+            "8001", "IsLeap",
+            "8001", "OBJ_get0_data",
+            "8001", "OBJ_length",
+            "5005", "X509PopCertificate"
+        ],
+        ## Both file path and directory path are accepted.
+        "IgnoreFiles": [
+            # MU_CHANGE - Start - Move to OneCrypto
+            # The unit testing folder is not to be checked
+            "Test/UnitTest",
+            # MU_CHANGE - End -Move to OneCrypto
+        ]
+    },
+    "CompilerPlugin": {
+        "DscPath": "CryptoPkg.dsc"
+    },
+    ## options defined .pytool/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        #"DscPath": "Test/CryptoPkgHostUnitTest.dsc"  # MU_CHANGE - Move to OneCrypto
+    },
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "CryptoPkg/CryptoPkg.dec",
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec",
+        ],
+        # For host based unit tests
+        "AcceptableDependencies-HOST_APPLICATION":[],
+        # For UEFI shell based apps
+        "AcceptableDependencies-UEFI_APPLICATION":[],
+        "IgnoreInf": []
+    },
+    "DscCompleteCheck": {
+        "DscPath": "CryptoPkg.dsc",
+        "IgnoreInf": [
+            ## MU_CHANGE - Start - Move to OneCrypto
+            "CryptoPkg/Binaries/**",
+            ## Components excluded from the OneCrypto build profile
+            "CryptoPkg/Driver/CryptoDxe.inf",
+            "CryptoPkg/Driver/CryptoPei.inf",
+            "CryptoPkg/Driver/CryptoSmm.inf",
+            "CryptoPkg/Driver/CryptoStandaloneMm.inf",
+            "CryptoPkg/Library/BaseCryptLibMbedTls/BaseCryptLib.inf",
+            "CryptoPkg/Library/BaseCryptLibMbedTls/PeiCryptLib.inf",
+            "CryptoPkg/Library/BaseCryptLibMbedTls/RuntimeCryptLib.inf",
+            "CryptoPkg/Library/BaseCryptLibMbedTls/SecCryptLib.inf",
+            "CryptoPkg/Library/BaseCryptLibMbedTls/SmmCryptLib.inf",
+            "CryptoPkg/Library/BaseCryptLibMbedTls/TestBaseCryptLib.inf",
+            "CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf",
+            "CryptoPkg/Library/BaseHashApiLib/BaseHashApiLib.inf",
+            "CryptoPkg/Library/HmacSha1Lib/HmacSha1LibNull.inf",
+            "CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf",
+            "CryptoPkg/Library/TlsLibNull/TlsLibNull.inf",
+            "CryptoPkg/Test/UnitTest/Library/BaseCryptLib/TestBaseCryptLibShell.inf"
+            ## MU_CHANGE - End - Move to OneCrypto
+        ]
+    },
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": [
+        # MU_CHANGE - Start - Move to OneCrypto
+            "CryptoPkg/Binaries/onecrypto-bin_extdep/"
+        ],
+        "IgnoreDuplicates": [
+            "OneCryptoBinStandaloneMm=OneCryptoBinSupvMm"  # Intentional: Same GUID for loader identification
+        ]
+        # MU_CHANGE - End - Move to OneCrypto
+    },
+    "LibraryClassCheck": {
+        "IgnoreHeaderFile": []
+    },
+    # MU_CHANGE - Start - Move to OneCrypto
+    "MarkdownLintCheck": {
+        "AuditOnly": False,          # If True, log all errors and then mark as skipped
+        "IgnoreFiles": []            # package root relative file, folder, or glob pattern to ignore
+    },
+    # MU_CHANGE - End - Move to OneCrypto
+
+    ## options defined ci/Plugin/SpellCheck
+    "SpellCheck": {
+        "skip": True,
+        "IgnoreFiles": [],           # use gitignore syntax to ignore errors in matching files
+        "ExtendWords": [],           # words to extend to the dictionary for this package
+        "IgnoreStandardPaths": [],   # Standard Plugin defined paths that should be ignore
+        "AdditionalIncludePaths": [] # Additional paths to spell check (wildcards supported)
+    },
+
+    # options defined in .pytool/Plugin/UncrustifyCheck
+    "UncrustifyCheck": {
+        "IgnoreFiles": [
+        # MU_CHANGE - Start - Move to OneCrypto
+        # MU_CHANGE - End - Move to OneCrypto
+        ]
+    },
+
+    ## options defined .pytool/Plugin/MarkdownLintCheck
+    "MarkdownLintCheck": {
+        "AuditOnly": True,           # If True, log all errors and then mark as skipped
+        "IgnoreFiles": []            # package root relative file, folder, or glob pattern to ignore
+    }
+}

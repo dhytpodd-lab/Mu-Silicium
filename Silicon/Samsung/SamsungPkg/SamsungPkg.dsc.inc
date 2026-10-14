@@ -1,0 +1,98 @@
+##
+#  Copyright (c) 2011-2015, ARM Limited. All rights reserved.
+#  Copyright (c) 2014, Linaro Limited. All rights reserved.
+#  Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.
+#  Copyright (c) 2018 - 2019, Bingxing Wang. All rights reserved.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+!include SiliciumPkg/SiliciumPkg.dsc.inc
+
+[BuildOptions]
+  *_CLANGPDB_AARCH64_CC_FLAGS = -D HAS_CNTFRQ_EL0_EMPTY_ERRATA=$(HAS_CNTFRQ_EL0_EMPTY_ERRATA)
+
+[PcdsFixedAtBuild]
+  #
+  # ACPI
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId|"SAMSUN"
+
+[LibraryClasses]
+  #
+  # Memory Libraries
+  #
+  RamManagerLib|SamsungPkg/Library/RamManagerLib/RamManagerLib.inf
+
+  #
+  # IO Libraries
+  #
+  GpioBankLib|SamsungNullPkg/Library/GpioBankNullLib/GpioBankNullLib.inf
+  HsI2cLib|SamsungNullPkg/Library/HsI2cNullLib/HsI2cNullLib.inf
+
+  #
+  # Power Management Libraries
+  #
+  PmicLib|SamsungNullPkg/Library/PmicNullLib/PmicNullLib.inf
+
+  #
+  # Storage Libraries
+  #
+  PlatformUfsLib|SamsungNullPkg/Library/PlatformUfsLibNull/PlatformUfsLibNull.inf
+  PlatformMshcLib|SamsungNullPkg/Library/PlatformMshcLibNull/PlatformMshcLibNull.inf
+  UfsCalAdapterLib|SamsungPkg/Library/UfsCalAdapterLib/UfsCalAdapterLib.inf
+
+  #
+  # USB Libraries
+  #
+  PlatformUsbfnLib|SamsungNullPkg/Library/PlatformUsbfnLibNull/PlatformUsbfnLibNull.inf
+
+  #
+  # Samsung Libraries
+  #
+  UsiLib|SamsungNullPkg/Library/UsiNullLib/UsiNullLib.inf
+
+  #
+  # BDS Libraries
+  #
+  ErrataPatchesLib|SamsungPkg/Library/ErrataPatchesLib/ErrataPatchesLib.inf
+
+[Components]
+  #
+  # Storage Drivers
+  #
+  SamsungPkg/Drivers/UfsDxe/UfsDxe.inf
+  SamsungPkg/Drivers/MshcDxe/MshcDxe.inf
+
+  #
+  # IO Drivers
+  #
+  SamsungPkg/Drivers/GpioDxe/GpioDxe.inf
+  SamsungPkg/Drivers/SpeedyDxe/SpeedyDxe.inf
+  SamsungPkg/Drivers/HsI2cDxe/HsI2cDxe.inf
+
+  #
+  # Power Management Drivers
+  #
+  SamsungPkg/Drivers/PmicDxe/PmicDxe.inf
+
+  #
+  # USB Drivers
+  #
+  SamsungPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
+
+  #
+  # RNG Drivers
+  #
+  SamsungPkg/Drivers/RngDxe/RngDxe.inf
+
+  #
+  # Samsung Drivers
+  #
+  SamsungPkg/Drivers/ChipInfoDxe/ChipInfoDxe.inf
+  SamsungPkg/Drivers/UsiDxe/UsiDxe.inf
+
+  #
+  # Custom Drivers
+  #
+  SamsungPkg/Drivers/HypLoaderDxe/HypLoaderDxe.inf

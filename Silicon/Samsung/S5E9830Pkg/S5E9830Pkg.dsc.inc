@@ -1,0 +1,112 @@
+##
+#  Copyright (c) 2011 - 2022, ARM Limited. All rights reserved.
+#  Copyright (c) 2014, Linaro Limited. All rights reserved.
+#  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.
+#  Copyright (c) 2018, Bingxing Wang. All rights reserved.
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  #
+  # Timer
+  #
+  USE_PHYSICAL_TIMER                         = 0
+
+  #
+  # KEP
+  #
+  HAS_CNTFRQ_EL0_EMPTY_ERRATA                = 1
+
+!include SamsungPkg/SamsungPkg.dsc.inc
+
+[BuildOptions]
+  *_*_AARCH64_CC_FLAGS = -march=armv8.2-a+crypto+rcpc
+
+[PcdsFixedAtBuild]
+  #
+  # ACPI
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId|0x2030333839453553
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemRevision|0x9830
+
+  #
+  # CPU
+  #
+  gArmPlatformTokenSpaceGuid.PcdCoreCount|8
+  gArmPlatformTokenSpaceGuid.PcdClusterCount|3
+
+  #
+  # GIC
+  #
+  gArmTokenSpaceGuid.PcdGicDistributorBase|0x10101000
+  gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase|0x10102000
+
+  #
+  # Timer
+  #
+  gSiliciumPkgTokenSpaceGuid.PcdTimerFreqOverwrite|26000000
+
+  #
+  # GPIO
+  # List Contents: 0x10430000, 0x10730000, 0x13040000, 0x13C30000, 0x15580000, 0x15850000, 0x15C30000
+  #
+  gSamsungPkgTokenSpaceGuid.PcdGpioCtrlAddr|{ 0x00, 0x00, 0x43, 0x10, 0x00, 0x00, 0x73, 0x10, 0x00, 0x00, 0x04, 0x13, 0x00, 0x00, 0xC3, 0x13, 0x00, 0x00, 0x58, 0x15, 0x00, 0x00, 0x85, 0x15, 0x00, 0x00, 0xC3, 0x15 }
+
+  #
+  # SPEEDY
+  # List Contents: 0x15940000, 0x15950000
+  #
+  gSamsungPkgTokenSpaceGuid.PcdSpeedyBusAddr|{ 0x00, 0x00, 0x94, 0x15, 0x00, 0x00, 0x95, 0x15 }
+
+  #
+  # RAM Manager
+  #
+  gSamsungPkgTokenSpaceGuid.PcdHasSecurePgtbl|TRUE
+  gSamsungPkgTokenSpaceGuid.PcdHasHarx|TRUE
+
+  #
+  # SMBIOS
+  #
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorModel|"Exynos (TM) 990 @ 2.73 GHz"
+  gSiliciumPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumber|"S5E9830"
+
+[LibraryClasses]
+  #
+  # SEC Libraries
+  #
+  PlatformSecLib|S5E9830Pkg/Library/PlatformSecLib/PlatformSecLib.inf
+
+  #
+  # UEFI Libraries
+  #
+  HwResetSystemLib|S5E9830Pkg/Library/ResetSystemLib/ResetSystemLib.inf
+  ResetSystemLib|S5E9830Pkg/Library/ResetSystemLib/ResetSystemLib.inf
+
+  #
+  # IO Libraries
+  #
+  GpioBankLib|S5E9830Pkg/Library/GpioBankLib/GpioBankLib.inf
+  HsI2cLib|S5E9830Pkg/Library/HsI2cLib/HsI2cLib.inf
+
+  #
+  # Power Management Libraries
+  #
+  PmicLib|S5E9830Pkg/Library/PmicLib/PmicLib.inf
+
+  #
+  # Storage Libraries
+  #
+  PlatformUfsLib|S5E9830Pkg/Library/PlatformUfsLib/PlatformUfsLib.inf
+  PlatformMshcLib|S5E9830Pkg/Library/PlatformMshcLib/PlatformMshcLib.inf
+
+  #
+  # USB Libraries
+  #
+  PlatformUsbfnLib|S5E9830Pkg/Library/PlatformUsbfnLib/PlatformUsbfnLib.inf
+
+  #
+  # Samsung Libraries
+  #
+  UsiLib|S5E9830Pkg/Library/UsiLib/UsiLib.inf

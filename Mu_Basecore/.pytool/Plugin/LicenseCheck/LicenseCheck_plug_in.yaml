@@ -1,0 +1,11 @@
+## @file
+# CiBuildPlugin used to check license issues for new added files
+#
+# Copyright (c) 2020, Intel Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+  "scope": "cibuild-disabled", # MU_CHANGE Disable LicenseCheck until Git issues are resolved
+  "name": "License Check Test",
+  "module": "LicenseCheck"
+}

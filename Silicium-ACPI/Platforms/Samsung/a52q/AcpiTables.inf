@@ -1,0 +1,19 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AcpiTables
+  FILE_GUID                      = 7E374E25-8E01-4FEE-87F2-390C23C606CD
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+
+[Binaries]
+  ASL|DSDT.aml
+  ASL|Common/SSDT.aml
+  ASL|Rennell/APIC.aml
+  ASL|Rennell/CSRT.aml
+  ASL|Rennell/DBG2.aml
+  ASL|Rennell/FACP.aml
+  ASL|Rennell/FACS.aml
+  ASL|Rennell/GTDT.aml
+  ASL|Rennell/IORT.aml
+  ASL|Rennell/MCFG.aml
+  ASL|Rennell/PPTT.aml
