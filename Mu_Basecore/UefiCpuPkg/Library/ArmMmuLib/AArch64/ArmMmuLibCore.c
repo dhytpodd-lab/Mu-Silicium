@@ -860,6 +860,7 @@ ArmConfigureMmu (
   while (MemoryTable->Length != 0) {
     Status = FillTranslationTable (TranslationTable, MemoryTable, ArmLpa2Enabled ());
     if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_WARN, "[MMU] FillTranslationTable failed: %r Base=0x%lx Len=0x%lx\n", Status, MemoryTable->PhysicalBase, MemoryTable->Length));
       goto FreeTranslationTable;
     }
 
@@ -895,7 +896,9 @@ ArmConfigureMmu (
     ArmEnableInstructionCache ();
     ArmEnableDataCache ();
 
+    DEBUG ((DEBUG_WARN, "[MMU] ArmEnableMmu...\n"));
     ArmEnableMmu ();
+    DEBUG ((DEBUG_WARN, "[MMU] ArmEnableMmu Done!\n"));
   }
 
   return EFI_SUCCESS;

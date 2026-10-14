@@ -68,7 +68,7 @@ ValidateMemoryMap (
 
     // Check for Overlap
     if (EndAddress > NextRegion->Address) {
-      DEBUG ((EFI_D_ERROR, "\"%a\" (0x%llx) and \"%a\" (0x%llx) Overlap!\n", CurrentRegion->Name, CurrentRegion->Address, NextRegion->Name, NextRegion->Address));
+      DEBUG ((EFI_D_WARN, "[MMU] OVERLAP: \"%a\" (0x%llx) & \"%a\" (0x%llx)!\n", CurrentRegion->Name, CurrentRegion->Address, NextRegion->Name, NextRegion->Address));
 
       // Set Memory Map State
       IsInvalid = TRUE;
@@ -77,6 +77,7 @@ ValidateMemoryMap (
 
   // Check Memory Map State
   if (IsInvalid) {
+    DEBUG ((EFI_D_WARN, "[MMU] Halting due to overlap!\n"));
     CpuDeadLoop ();
   }
 }
@@ -114,13 +115,16 @@ MemoryPeim (
   UINTN                         Index                                               = 0;
 
   // Show Entry Message
-  DEBUG ((EFI_D_WARN, "MMU In\r"));
+  DEBUG ((EFI_D_WARN, "[MMU] Entering MemoryPeim...\n"));
 
   // Get Memory Map
   GetMemoryMap (&MemoryDescriptor, &MemoryDescriptorCount);
+  DEBUG ((EFI_D_WARN, "[MMU] Memory Regions: %u\n", MemoryDescriptorCount));
 
   // Validate Memory Map
+  DEBUG ((EFI_D_WARN, "[MMU] Validating Memory Map...\n"));
   ValidateMemoryMap (MemoryDescriptor, MemoryDescriptorCount);
+  DEBUG ((EFI_D_WARN, "[MMU] Validation OK\n"));
 
   // Go thru each Memory Region
   for (UINT8 i = 0; i < MemoryDescriptorCount; i++) {
@@ -142,12 +146,16 @@ MemoryPeim (
     Index++;
   }
 
+  DEBUG ((EFI_D_WARN, "[MMU] ArmConfigureMmu (%u entries)...\n", Index));
+
   // Configure MMU
   Status = ArmConfigureMmu (MemoryTable, &TranslationTableBase, &TranslationTableSize);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Failed to Configure MMU! Status = %r\n", Status));
+    DEBUG ((EFI_D_WARN, "[MMU] Failed to Configure MMU! Status = %r\n", Status));
     return Status;
   }
+
+  DEBUG ((EFI_D_WARN, "[MMU] MMU Configured OK!\n"));
 
   // Build Memory Type Info HOB
   if (FeaturePcdGet (PcdPrePiProduceMemoryTypeInformationHob)) {

@@ -55,8 +55,10 @@ EFI_STATUS
 InitializeMemory (VOID)
 {
   EFI_STATUS                    Status;
-  EFI_MEMORY_REGION_DESCRIPTOR  UefiMemoryRegion;
+  EFI_MEMORY_REGION_DESCRIPTOR  UefiMemoryRegion = {0};
   EFI_HOB_HANDOFF_INFO_TABLE   *HobList;
+
+  DEBUG ((EFI_D_WARN, "[SEC] Step 1: Locate DXE Heap...\n"));
 
   // Locate "DXE Heap" Memory Region
   LocateMemoryRegionByName ("DXE Heap", &UefiMemoryRegion);
@@ -66,24 +68,37 @@ InitializeMemory (VOID)
   UINTN UefiMemoryBase = UefiMemoryRegion.Address;
   UINTN UefiMemorySize = UefiMemoryRegion.Length;
 
+  DEBUG ((EFI_D_WARN, "[SEC] DXE Heap: 0x%lx (0x%lx)\n", UefiMemoryBase, UefiMemorySize));
+
   // Verify UEFI Memory Base
   if (UefiMemoryBase == 0 && UefiMemorySize == 0) {
-    DEBUG ((EFI_D_ERROR, "Failed to Locate \"DXE Heap\" Memory Region!\n"));
+    DEBUG ((EFI_D_WARN, "[SEC] Failed to Locate \"DXE Heap\" Memory Region!\n"));
     return EFI_NOT_FOUND;
   }
 
+  DEBUG ((EFI_D_WARN, "[SEC] Step 2: HobConstructor...\n"));
+
   // Initialize HOB List
   HobList = HobConstructor ((VOID *)UefiMemoryBase, UefiMemorySize, (VOID *)UefiMemoryBase, (VOID *)(UefiMemoryBase + UefiMemorySize));
+
+  DEBUG ((EFI_D_WARN, "[SEC] Step 3: PrePeiSetHobList...\n"));
   PrePeiSetHobList (HobList);
+
+  DEBUG ((EFI_D_WARN, "[SEC] Step 4: MemoryPeim...\n"));
 
   // Initialize MMU & Memory HOBs
   Status = MemoryPeim (UefiMemoryBase, UefiMemorySize);
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_WARN, "[SEC] MemoryPeim Failed: %r\n", Status));
     return Status;
   }
 
+  DEBUG ((EFI_D_WARN, "[SEC] Step 5: BuildStackHob...\n"));
+
   // Build Stack HOB
   BuildStackHob (FixedPcdGet64 (PcdCPUCoresStackBase), FixedPcdGet32 (PcdCPUCorePrimaryStackSize));
+
+  DEBUG ((EFI_D_WARN, "[SEC] InitializeMemory OK!\n"));
 
   return EFI_SUCCESS;
 }
