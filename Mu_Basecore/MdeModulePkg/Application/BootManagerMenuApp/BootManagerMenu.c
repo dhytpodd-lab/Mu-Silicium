@@ -1061,7 +1061,7 @@ BootManagerMenuEntry (
   EfiBootManagerRefreshAllBootOption ();
 
   BootOption = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
-  DEBUG ((EFI_D_WARN, "[BMM] 3. BootOptionCount = %d\n", BootOptionCount));
+  DEBUG ((EFI_D_WARN, "[BMM] 3. BootOptionCount = %d\n", (UINT32)BootOptionCount));
 
   if (!mModeInitialized) {
     //
@@ -1108,8 +1108,8 @@ BootManagerMenuEntry (
     //
     // Get user defined text mode for setup.
     //
-    mSetupHorizontalResolution = PcdGet32 (PcdSetupVideoHorizontalResolution);
-    mSetupVerticalResolution   = PcdGet32 (PcdSetupVideoVerticalResolution);
+    mSetupHorizontalResolution = (mBootHorizontalResolution != 0) ? mBootHorizontalResolution : PcdGet32 (PcdSetupVideoHorizontalResolution);
+    mSetupVerticalResolution   = (mBootVerticalResolution != 0) ? mBootVerticalResolution : PcdGet32 (PcdSetupVideoVerticalResolution);
     mSetupTextModeColumn       = PcdGet32 (PcdSetupConOutColumn);
     mSetupTextModeRow          = PcdGet32 (PcdSetupConOutRow);
     mModeInitialized           = TRUE;
@@ -1125,7 +1125,7 @@ BootManagerMenuEntry (
   //
   DEBUG ((EFI_D_WARN, "[BMM] 4. InitializeBootMenuData...\n"));
   Status = InitializeBootMenuData (BootOption, BootOptionCount, &BootMenuData);
-  DEBUG ((EFI_D_WARN, "[BMM] 5. Status = %r, ItemCount = %d\n", Status, BootMenuData.ItemCount));
+  DEBUG ((EFI_D_WARN, "[BMM] 5. Status = %r, ItemCount = %d\n", Status, (UINT32)BootMenuData.ItemCount));
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed InitializeBootMenuData %r\n", __func__, Status));
     return EFI_NOT_FOUND;
@@ -1145,7 +1145,7 @@ BootManagerMenuEntry (
   while (!ExitApplication) {
     gBS->WaitForEvent (1, &gST->ConIn->WaitForKey, &Index);
     Status = gST->ConIn->ReadKeyStroke (gST->ConIn, &Key);
-    DEBUG ((EFI_D_WARN, "[BMM] Key: Unicode=0x%04x Scan=0x%04x\n", Key.UnicodeChar, Key.ScanCode));
+    DEBUG ((EFI_D_WARN, "[BMM] Key: Unicode=0x%04x Scan=0x%04x\n", (UINT32)Key.UnicodeChar, (UINT32)Key.ScanCode));
     if (!EFI_ERROR (Status)) {
       switch (Key.UnicodeChar) {
         case CHAR_NULL:
