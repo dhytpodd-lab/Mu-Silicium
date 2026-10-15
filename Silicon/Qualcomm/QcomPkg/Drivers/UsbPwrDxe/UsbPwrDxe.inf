@@ -1,0 +1,25 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UsbPwrDxe
+  FILE_GUID                      = A83C9D29-DBF5-49FA-B818-FBB38076D148
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UsbPwrDxeEntry
+
+[Sources]
+  UsbPwrDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  QcomPkg/QcomPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  DebugLib
+
+[Protocols]
+  gEfiUsbPwrCtrlProtocolGuid
+
+[Depex]
+  gEfiUsbPwrCtrlProtocolGuid

@@ -53,6 +53,7 @@
   # Custom Drivers
   #
   QcomPkg/Drivers/DisplayReEnablerDxe/DisplayReEnablerDxe.inf
+  QcomPkg/Drivers/UsbPwrDxe/UsbPwrDxe.inf
 
   #
   # Custom Apps

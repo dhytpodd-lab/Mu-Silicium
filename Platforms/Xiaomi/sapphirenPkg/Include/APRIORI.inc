@@ -63,6 +63,7 @@ APRIORI DXE {
   INF Binaries/sapphiren/QcomPkg/Drivers/I2CDxe/I2CDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/AdcDxe/AdcDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/UsbPwrCtrlDxe/UsbPwrCtrlDxe.inf
+  INF QcomPkg/Drivers/UsbPwrDxe/UsbPwrDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf

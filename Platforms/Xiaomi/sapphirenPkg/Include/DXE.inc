@@ -67,6 +67,7 @@
   INF Binaries/sapphiren/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/UsbPwrCtrlDxe/UsbPwrCtrlDxe.inf
+  INF QcomPkg/Drivers/UsbPwrDxe/UsbPwrDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/AdcDxe/AdcDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/TsensDxe/TsensDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/DDRInfoDxe/DDRInfoDxe.inf
