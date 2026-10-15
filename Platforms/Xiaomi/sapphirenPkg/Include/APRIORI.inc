@@ -69,7 +69,9 @@ APRIORI DXE {
   INF Binaries/sapphiren/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
 
   INF Binaries/generic/QcomPkg/Drivers/XhciPciEmulationDxe/XhciPciEmulationDxe.inf
-  INF Binaries/generic/QcomPkg/Drivers/XhciDxe/XhciDxe.inf
+  # Binary SDM670 XhciDxe crashes on hot-plug (RaiseTpl 0x10 > 0x8), use open-source one
+  # INF Binaries/generic/QcomPkg/Drivers/XhciDxe/XhciDxe.inf
+  INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
 
   INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf

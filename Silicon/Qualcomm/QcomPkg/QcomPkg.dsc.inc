@@ -54,6 +54,7 @@
   #
   QcomPkg/Drivers/DisplayReEnablerDxe/DisplayReEnablerDxe.inf
   QcomPkg/Drivers/UsbPwrDxe/UsbPwrDxe.inf
+  MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
 
   #
   # Custom Apps
