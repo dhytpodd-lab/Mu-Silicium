@@ -111,6 +111,39 @@ PlatformConnectUsb (
     }
     FreePool (Handles);
   }
+
+  // Give USB bus a brief moment to enumerate devices
+  gBS->Stall (100000);
+
+  // 3. Connect Console In (attaches ConPlatform / ConSplitter to all SimpleTextIn handles)
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleTextInProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (Handles);
+  }
+
+  // 4. Connect Extended Console In (SimpleTextInputEx)
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleTextInputExProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (Handles);
+  }
 }
 
 VOID

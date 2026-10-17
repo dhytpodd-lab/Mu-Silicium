@@ -1011,6 +1011,32 @@ BdsSetConsoleMode (
   @retval  EFI_NOT_FOUND        User select to enter setup or can not find boot option
 
 **/
+STATIC
+VOID
+ConnectUsbConsole (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       HandleCount;
+  EFI_HANDLE  *Handles;
+  UINTN       Index;
+
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleTextInProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (Handles);
+  }
+}
+
 EFI_STATUS
 EFIAPI
 BootManagerMenuEntry (
@@ -1031,6 +1057,10 @@ BootManagerMenuEntry (
   EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL  *SimpleTextOut;
   UINTN                            BootTextColumn;
   UINTN                            BootTextRow;
+  EFI_EVENT                        PollTimer;
+  EFI_EVENT                        WaitList[2];
+
+  PollTimer = NULL;
 
   //
   // Set Logo status invalid when boot manager menu is launched
@@ -1134,12 +1164,27 @@ BootManagerMenuEntry (
   DrawBootPopupMenu (&BootMenuData);
   DEBUG ((EFI_D_WARN, "[BMM] 7. Ready! Press Vol+/Vol- to navigate, Power to select\n"));
 
+  ConnectUsbConsole ();
+
+  Status = gBS->CreateEvent (EVT_TIMER, TPL_CALLBACK, NULL, NULL, &PollTimer);
+  if (!EFI_ERROR (Status) && (PollTimer != NULL)) {
+    gBS->SetTimer (PollTimer, TimerPeriodic, 5000000);
+  }
+
   //
   // check user input to determine want to re-draw or boot from user selected item
   //
   ExitApplication = FALSE;
   while (!ExitApplication) {
-    gBS->WaitForEvent (1, &gST->ConIn->WaitForKey, &Index);
+    WaitList[0] = gST->ConIn->WaitForKey;
+    WaitList[1] = PollTimer;
+
+    Status = gBS->WaitForEvent ((PollTimer != NULL) ? 2 : 1, WaitList, &Index);
+    if (!EFI_ERROR (Status) && (Index == 1)) {
+      ConnectUsbConsole ();
+      continue;
+    }
+
     Status = gST->ConIn->ReadKeyStroke (gST->ConIn, &Key);
     DEBUG ((EFI_D_WARN, "[BMM] Key: Unicode=0x%04x Scan=0x%04x\n", (UINT32)Key.UnicodeChar, (UINT32)Key.ScanCode));
     if (!EFI_ERROR (Status)) {
@@ -1189,6 +1234,8 @@ BootManagerMenuEntry (
           break;
       }
     }
+  if (PollTimer != NULL) {
+    gBS->CloseEvent (PollTimer);
   }
 
   EfiBootManagerFreeLoadOptions (BootOption, BootOptionCount);

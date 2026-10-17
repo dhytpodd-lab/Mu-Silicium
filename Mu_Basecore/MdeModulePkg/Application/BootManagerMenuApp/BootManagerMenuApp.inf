@@ -48,6 +48,7 @@
   gEfiBootLogoProtocolGuid                      ## SOMETIMES_CONSUMES
   gEfiLoadedImageDevicePathProtocolGuid         ## CONSUMES
   gEfiBlockIoProtocolGuid                       ## CONSUMES
+  gEfiSimpleTextInProtocolGuid                  ## CONSUMES
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow                          ## PRODUCES

@@ -63,7 +63,10 @@ PrintUI (IN CHAR8 *Message)
 EFI_INPUT_KEY
 GetPressedKey (IN BOOLEAN Wait)
 {
+  EFI_STATUS    Status;
   EFI_INPUT_KEY Key;
+
+  ZeroMem (&Key, sizeof (EFI_INPUT_KEY));
 
   // Wait for Keypress
   if (Wait) {
@@ -71,7 +74,11 @@ GetPressedKey (IN BOOLEAN Wait)
   }
 
   // Get Detected Keypress
-  gST->ConIn->ReadKeyStroke (gST->ConIn, &Key);
+  Status = gST->ConIn->ReadKeyStroke (gST->ConIn, &Key);
+  if (EFI_ERROR (Status)) {
+    Key.ScanCode    = 0;
+    Key.UnicodeChar = 0;
+  }
 
   return Key;
 }
@@ -94,6 +101,18 @@ MassStorageStart ()
 
   // Start USB Device
   Status = mUsbMsdProtocol->StartDevice (mUsbMsdProtocol);
+  if (Status == EFI_NOT_READY || Status == EFI_ALREADY_STARTED) {
+    DEBUG ((EFI_D_WARN, "%a: Usb MSD was already started, attempting to stop first...\n", __FUNCTION__));
+    mUsbMsdProtocol->StopDevice (mUsbMsdProtocol);
+    Status = mUsbMsdProtocol->StartDevice (mUsbMsdProtocol);
+  }
+
+  // If still not ready / already started, proceed with active session
+  if (Status == EFI_NOT_READY || Status == EFI_ALREADY_STARTED) {
+    DEBUG ((EFI_D_WARN, "%a: Proceeding with active USB MSD session...\n", __FUNCTION__));
+    Status = EFI_SUCCESS;
+  }
+
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "%a: Failed to Start USB Device! Status = %r\n", __FUNCTION__, Status));
     if (UsbPwrCtrl != NULL && UsbPwrCtrl->SetVbusEn != NULL) {
