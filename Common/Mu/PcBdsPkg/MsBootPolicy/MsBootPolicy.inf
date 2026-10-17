@@ -59,6 +59,8 @@
   gEfiLoadedImageProtocolGuid
   gEfiPciIoProtocolGuid
   gEfiUsb2HcProtocolGuid
+  gEfiUsbIoProtocolGuid
+  gEfiBlockIoProtocolGuid
 
 [FeaturePcd]
 

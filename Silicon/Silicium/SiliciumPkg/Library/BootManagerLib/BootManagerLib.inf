@@ -51,3 +51,5 @@
   gEfiSimpleTextInputExProtocolGuid
   gEfiPciIoProtocolGuid
   gEfiUsb2HcProtocolGuid
+  gEfiUsbIoProtocolGuid
+  gEfiBlockIoProtocolGuid

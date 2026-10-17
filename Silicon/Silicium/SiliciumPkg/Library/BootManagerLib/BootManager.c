@@ -20,6 +20,8 @@
 #include <Library/PrintLib.h>
 #include <Protocol/PciIo.h>
 #include <Protocol/Usb2HostController.h>
+#include <Protocol/UsbIo.h>
+#include <Protocol/BlockIo.h>
 
 #include <Configuration/BootDevices.h>
 
@@ -70,6 +72,23 @@ STATIC UINTN YPos = 0;
 //
 STATIC CONST CHAR8 *ComboMessage = "[Volume Up] Boot Manager";
 
+STATIC
+BOOLEAN
+IsUsbDevicePath (
+  IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
+  )
+{
+  while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
+    if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == MSG_USB_DP))
+    {
+      return TRUE;
+    }
+    DevicePath = NextDevicePathNode (DevicePath);
+  }
+  return FALSE;
+}
+
 VOID
 PlatformConnectUsb (
   VOID
@@ -79,6 +98,7 @@ PlatformConnectUsb (
   UINTN       HandleCount;
   EFI_HANDLE  *Handles;
   UINTN       Index;
+  UINTN       Pass;
 
   DEBUG ((EFI_D_WARN, "[BDS] Connecting USB Controllers...\n"));
 
@@ -97,7 +117,7 @@ PlatformConnectUsb (
     FreePool (Handles);
   }
 
-  // 2. Connect USB2 Host Controllers (attaches UsbBusDxe -> UsbKbDxe / UsbMassStorageDxe)
+  // 2. Connect USB2 Host Controllers (attaches UsbBusDxe to XHCI)
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
                   &gEfiUsb2HcProtocolGuid,
@@ -112,37 +132,58 @@ PlatformConnectUsb (
     FreePool (Handles);
   }
 
-  // Give USB bus a brief moment to enumerate devices
-  gBS->Stall (100000);
+  // 3. Multi-pass connect: UsbIo -> UsbKb/UsbMassStorage -> BlockIo -> PartitionDxe -> FatDxe
+  for (Pass = 0; Pass < 3; Pass++) {
+    gBS->Stall (150000);
 
-  // 3. Connect Console In (attaches ConPlatform / ConSplitter to all SimpleTextIn handles)
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiSimpleTextInProtocolGuid,
-                  NULL,
-                  &HandleCount,
-                  &Handles
-                  );
-  if (!EFI_ERROR (Status) && (Handles != NULL)) {
-    for (Index = 0; Index < HandleCount; Index++) {
-      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    // Connect all UsbIo handles (attaches UsbMassStorageDxe and UsbKbDxe)
+    Status = gBS->LocateHandleBuffer (
+                    ByProtocol,
+                    &gEfiUsbIoProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+                    );
+    if (!EFI_ERROR (Status) && (Handles != NULL)) {
+      for (Index = 0; Index < HandleCount; Index++) {
+        gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+      }
+      FreePool (Handles);
     }
-    FreePool (Handles);
-  }
 
-  // 4. Connect Extended Console In (SimpleTextInputEx)
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiSimpleTextInputExProtocolGuid,
-                  NULL,
-                  &HandleCount,
-                  &Handles
-                  );
-  if (!EFI_ERROR (Status) && (Handles != NULL)) {
-    for (Index = 0; Index < HandleCount; Index++) {
-      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    // Connect USB BlockIo handles (attaches PartitionDxe, DiskIoDxe, FatDxe)
+    // Exclude internal UFS handles to prevent hanging on RPMB LU4!
+    Status = gBS->LocateHandleBuffer (
+                    ByProtocol,
+                    &gEfiBlockIoProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+                    );
+    if (!EFI_ERROR (Status) && (Handles != NULL)) {
+      for (Index = 0; Index < HandleCount; Index++) {
+        EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
+        if ((DevicePath != NULL) && IsUsbDevicePath (DevicePath)) {
+          gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+        }
+      }
+      FreePool (Handles);
     }
-    FreePool (Handles);
+
+    // Connect Console In (attaches ConPlatform / ConSplitter to all SimpleTextIn handles)
+    Status = gBS->LocateHandleBuffer (
+                    ByProtocol,
+                    &gEfiSimpleTextInProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+                    );
+    if (!EFI_ERROR (Status) && (Handles != NULL)) {
+      for (Index = 0; Index < HandleCount; Index++) {
+        gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+      }
+      FreePool (Handles);
+    }
   }
 }
 

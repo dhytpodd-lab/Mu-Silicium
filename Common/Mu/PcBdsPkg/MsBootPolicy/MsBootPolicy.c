@@ -8,52 +8,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "MsBootPolicy.h"
 #include <Protocol/PciIo.h>
 #include <Protocol/Usb2HostController.h>
+#include <Protocol/UsbIo.h>
+#include <Protocol/BlockIo.h>
 
 #define USB_DRIVE_SECOND_CHANCE_DELAY_S  6
-
-STATIC
-VOID
-ConnectUsbControllers (
-  VOID
-  )
-{
-  EFI_STATUS  Status;
-  UINTN       HandleCount;
-  EFI_HANDLE  *Handles;
-  UINTN       Index;
-
-  DEBUG ((DEBUG_INFO, "%a: Connecting USB controllers...\n", __FUNCTION__));
-
-  // Connect PCI I/O controllers (attaches XhciDxe to XhciPciEmulation)
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiPciIoProtocolGuid,
-                  NULL,
-                  &HandleCount,
-                  &Handles
-                  );
-  if (!EFI_ERROR (Status) && (Handles != NULL)) {
-    for (Index = 0; Index < HandleCount; Index++) {
-      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
-    }
-    FreePool (Handles);
-  }
-
-  // Connect USB2 Host Controllers (attaches UsbBusDxe -> UsbMassStorageDxe)
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiUsb2HcProtocolGuid,
-                  NULL,
-                  &HandleCount,
-                  &Handles
-                  );
-  if (!EFI_ERROR (Status) && (Handles != NULL)) {
-    for (Index = 0; Index < HandleCount; Index++) {
-      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
-    }
-    FreePool (Handles);
-  }
-}
 
 static BOOT_SEQUENCE  mDefaultBootSequence[] = {
   MsBootHDD,
@@ -142,6 +100,90 @@ FilterNoUSB (
   )
 {
   return (FALSE == IsDevicePathUSB (DevicePath));
+}
+
+STATIC
+VOID
+ConnectUsbControllers (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       HandleCount;
+  EFI_HANDLE  *Handles;
+  UINTN       Index;
+  UINTN       Pass;
+
+  DEBUG ((DEBUG_INFO, "%a: Connecting USB controllers...\n", __FUNCTION__));
+
+  // 1. Connect PCI I/O controllers (attaches XhciDxe to XhciPciEmulation)
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiPciIoProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (Handles);
+  }
+
+  // 2. Connect USB2 Host Controllers (attaches UsbBusDxe to XHCI)
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiUsb2HcProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (Handles);
+  }
+
+  // 3. Multi-pass connect: UsbIo -> UsbMassStorage -> BlockIo -> PartitionDxe -> FatDxe
+  for (Pass = 0; Pass < 3; Pass++) {
+    gBS->Stall (200000); // 200ms per pass
+
+    // Connect all UsbIo handles (attaches UsbMassStorageDxe and UsbKbDxe)
+    Status = gBS->LocateHandleBuffer (
+                    ByProtocol,
+                    &gEfiUsbIoProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+                    );
+    if (!EFI_ERROR (Status) && (Handles != NULL)) {
+      for (Index = 0; Index < HandleCount; Index++) {
+        gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+      }
+      FreePool (Handles);
+    }
+
+    // Connect USB BlockIo handles (attaches PartitionDxe, DiskIoDxe, FatDxe)
+    // Exclude internal UFS handles to prevent hanging on RPMB LU4!
+    Status = gBS->LocateHandleBuffer (
+                    ByProtocol,
+                    &gEfiBlockIoProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+                    );
+    if (!EFI_ERROR (Status) && (Handles != NULL)) {
+      for (Index = 0; Index < HandleCount; Index++) {
+        EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
+        if ((DevicePath != NULL) && IsDevicePathUSB (DevicePath)) {
+          gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+        }
+      }
+      FreePool (Handles);
+    }
+  }
 }
 
 BOOLEAN EFIAPI
