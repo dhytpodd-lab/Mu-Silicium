@@ -6,8 +6,54 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include "MsBootPolicy.h"
+#include <Protocol/PciIo.h>
+#include <Protocol/Usb2HostController.h>
 
 #define USB_DRIVE_SECOND_CHANCE_DELAY_S  6
+
+STATIC
+VOID
+ConnectUsbControllers (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       HandleCount;
+  EFI_HANDLE  *Handles;
+  UINTN       Index;
+
+  DEBUG ((DEBUG_INFO, "%a: Connecting USB controllers...\n", __FUNCTION__));
+
+  // Connect PCI I/O controllers (attaches XhciDxe to XhciPciEmulation)
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiPciIoProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (Handles);
+  }
+
+  // Connect USB2 Host Controllers (attaches UsbBusDxe -> UsbMassStorageDxe)
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiUsb2HcProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (Handles);
+  }
+}
 
 static BOOT_SEQUENCE  mDefaultBootSequence[] = {
   MsBootHDD,
@@ -633,7 +679,8 @@ MsBootPolicyEntry (
       break;
   }
 
-  // EfiBootManagerConnectAll ();     // Connect All is required for this type of boot (disabled: hangs on UFS RPMB partition)
+  // Connect USB controllers without touching internal UFS RPMB partition
+  ConnectUsbControllers ();
 
   CleanLoadOptions (LoadOptionTypeBoot);    // Insure there are no dangling BOOT#### options.
 
@@ -678,6 +725,8 @@ MsBootPolicyEntry (
           DEBUG ((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
         }
 
+        ConnectUsbControllers ();
+
         Status = SelectAndBootDevice (&gEfiSimpleFileSystemProtocolGuid, FilterOnlyUSB);
         if (Status == EFI_NOT_FOUND) {
           DEBUG ((DEBUG_WARN, "USB boot desired, but no USB devices found on first attempt\n"));
@@ -685,6 +734,7 @@ MsBootPolicyEntry (
           // USB enumeration through (crappy, slow) hubs may take a while, especially in
           // debug builds. wait a number of seconds and try one more time.
           PauseToLetUsbDrivesEnumerateThroughHubs ();
+          ConnectUsbControllers ();
           Status = SelectAndBootDevice (&gEfiSimpleFileSystemProtocolGuid, FilterOnlyUSB);
           if (EFI_ERROR (Status)) {
             DEBUG ((DEBUG_WARN, "Second chance USB boot failed! Status = %r\n", Status));

@@ -10,6 +10,19 @@
 
 #include "MassStorage.h"
 
+typedef struct _EFI_USB_PWR_CTRL_PROTOCOL EFI_USB_PWR_CTRL_PROTOCOL;
+
+typedef EFI_STATUS (EFIAPI *EFI_USB_PWR_CTRL_SET_VBUS_EN) (
+  IN UINT8   PortIndex,
+  IN BOOLEAN Enable
+);
+
+struct _EFI_USB_PWR_CTRL_PROTOCOL {
+  UINT64                        Version;
+  VOID                         *Reserved[9];
+  EFI_USB_PWR_CTRL_SET_VBUS_EN  SetVbusEn;
+};
+
 //
 // Global Protocols
 //
@@ -66,7 +79,15 @@ GetPressedKey (IN BOOLEAN Wait)
 VOID
 MassStorageStart ()
 {
-  EFI_STATUS Status;
+  EFI_STATUS                 Status;
+  EFI_USB_PWR_CTRL_PROTOCOL *UsbPwrCtrl = NULL;
+
+  // Locate USB Power Control to disable 5V VBUS boost (PC provides VBUS in device mode)
+  Status = gBS->LocateProtocol (&gEfiUsbPwrCtrlProtocolGuid, NULL, (VOID **)&UsbPwrCtrl);
+  if (!EFI_ERROR (Status) && (UsbPwrCtrl != NULL) && (UsbPwrCtrl->SetVbusEn != NULL)) {
+    DEBUG ((EFI_D_WARN, "%a: Disabling VBUS boost for USB Device mode...\n", __FUNCTION__));
+    UsbPwrCtrl->SetVbusEn (0, FALSE);
+  }
 
   // Show Cancel Instruction
   PrintUI ("[Volume Up] Exit Mass Storage");
@@ -75,6 +96,9 @@ MassStorageStart ()
   Status = mUsbMsdProtocol->StartDevice (mUsbMsdProtocol);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "%a: Failed to Start USB Device! Status = %r\n", __FUNCTION__, Status));
+    if (UsbPwrCtrl != NULL && UsbPwrCtrl->SetVbusEn != NULL) {
+      UsbPwrCtrl->SetVbusEn (0, TRUE);
+    }
     return;
   }
 
@@ -93,6 +117,12 @@ MassStorageStart ()
   Status = mUsbMsdProtocol->StopDevice (mUsbMsdProtocol);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "%a: Failed to Stop USB Device! Status = %r\n", __FUNCTION__, Status));
+  }
+
+  // Restore VBUS boost for Host / OTG mode
+  if (UsbPwrCtrl != NULL && UsbPwrCtrl->SetVbusEn != NULL) {
+    DEBUG ((EFI_D_WARN, "%a: Restoring VBUS boost for Host mode...\n", __FUNCTION__));
+    UsbPwrCtrl->SetVbusEn (0, TRUE);
   }
 }
 

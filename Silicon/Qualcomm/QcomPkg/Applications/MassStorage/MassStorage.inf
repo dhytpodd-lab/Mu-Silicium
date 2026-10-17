@@ -40,3 +40,4 @@
   gEfiGraphicsOutputProtocolGuid
   gEfiUsbMsdProtocolGuid
   gEfiBlockIoProtocolGuid
+  gEfiUsbPwrCtrlProtocolGuid

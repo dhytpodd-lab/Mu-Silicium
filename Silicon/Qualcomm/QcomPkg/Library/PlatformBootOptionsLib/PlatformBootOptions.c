@@ -21,7 +21,7 @@ GetPlatformBootOptions (
   // Add Mass Storage Boot Option
   LocalBootOption[0].AppName       = L"Mass Storage";
   LocalBootOption[0].AppGuid       = FixedPcdGetPtr (PcdMassStorageFile);
-  LocalBootOption[0].LoadAttribute = LOAD_OPTION_HIDDEN;
+  LocalBootOption[0].LoadAttribute = LOAD_OPTION_ACTIVE;
 
   // Set Boot Option Count
   LocalBootOptionCount = 1;

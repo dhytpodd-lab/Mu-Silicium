@@ -48,3 +48,5 @@
   gKeypadDeviceProtocolGuid
   gEfiGraphicsOutputProtocolGuid
   gEfiSimpleTextInputExProtocolGuid
+  gEfiPciIoProtocolGuid
+  gEfiUsb2HcProtocolGuid

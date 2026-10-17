@@ -18,10 +18,46 @@
 #include <Library/BootGraphicsLib.h>
 #include <Library/BootGraphics.h>
 #include <Library/PrintLib.h>
+#include <Protocol/PciIo.h>
+#include <Protocol/Usb2HostController.h>
 
 #include <Configuration/BootDevices.h>
 
 #include "BootManager.h"
+
+#define DP_NODE_LEN(Type)  { (UINT8)sizeof (Type), (UINT8)(sizeof (Type) >> 8) }
+
+#pragma pack (1)
+typedef struct {
+  USB_CLASS_DEVICE_PATH       Keyboard;
+  EFI_DEVICE_PATH_PROTOCOL    End;
+} PLATFORM_USB_KEYBOARD;
+#pragma pack ()
+
+STATIC CONST PLATFORM_USB_KEYBOARD mUsbKeyboard = {
+  //
+  // USB_CLASS_DEVICE_PATH Keyboard
+  //
+  {
+    {
+      MESSAGING_DEVICE_PATH, MSG_USB_CLASS_DP,
+      DP_NODE_LEN (USB_CLASS_DEVICE_PATH)
+    },
+    0xFFFF, // VendorId: any
+    0xFFFF, // ProductId: any
+    3,      // DeviceClass: HID
+    1,      // DeviceSubClass: boot
+    1       // DeviceProtocol: keyboard
+  },
+
+  //
+  // EFI_DEVICE_PATH_PROTOCOL End
+  //
+  {
+    END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE,
+    DP_NODE_LEN (EFI_DEVICE_PATH_PROTOCOL)
+  }
+};
 
 //
 // Global Variables
@@ -33,6 +69,49 @@ STATIC UINTN YPos = 0;
 // BDS Combo Message
 //
 STATIC CONST CHAR8 *ComboMessage = "[Volume Up] Boot Manager";
+
+VOID
+PlatformConnectUsb (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       HandleCount;
+  EFI_HANDLE  *Handles;
+  UINTN       Index;
+
+  DEBUG ((EFI_D_WARN, "[BDS] Connecting USB Controllers...\n"));
+
+  // 1. Connect PCI I/O controllers (attaches XhciDxe to XhciPciEmulation)
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiPciIoProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (Handles);
+  }
+
+  // 2. Connect USB2 Host Controllers (attaches UsbBusDxe -> UsbKbDxe / UsbMassStorageDxe)
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiUsb2HcProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+    }
+    FreePool (Handles);
+  }
+}
 
 VOID
 EFIAPI
@@ -49,8 +128,12 @@ PlatformBootManagerBeforeConsole ()
   // Register Boot Options
   MsBootOptionsLibRegisterDefaultBootOptions ();
 
+  // Connect USB Controllers for OTG Keyboard & Mass Storage
+  PlatformConnectUsb ();
+
   // Register Console Variables
   EfiBootManagerUpdateConsoleVariable (ConIn,  (EFI_DEVICE_PATH_PROTOCOL *)&KeypadDevicePath,  NULL);
+  EfiBootManagerUpdateConsoleVariable (ConIn,  (EFI_DEVICE_PATH_PROTOCOL *)&mUsbKeyboard,      NULL);
   EfiBootManagerUpdateConsoleVariable (ConOut, (EFI_DEVICE_PATH_PROTOCOL *)&DisplayDevicePath, NULL);
   EfiBootManagerUpdateConsoleVariable (ErrOut, (EFI_DEVICE_PATH_PROTOCOL *)&DisplayDevicePath, NULL);
 
@@ -134,6 +217,9 @@ VOID
 EFIAPI
 PlatformBootManagerOnDemandConInConnect ()
 {
+  // Re-connect USB controllers to discover newly plugged OTG keyboards
+  PlatformConnectUsb ();
+
   // Execute Secondary On Demand
   DeviceBootManagerOnDemandConInConnect ();
 }
