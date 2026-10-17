@@ -633,7 +633,7 @@ MsBootPolicyEntry (
       break;
   }
 
-  EfiBootManagerConnectAll ();     // Connect All is required for this type of boot
+  // EfiBootManagerConnectAll ();     // Connect All is required for this type of boot (disabled: hangs on UFS RPMB partition)
 
   CleanLoadOptions (LoadOptionTypeBoot);    // Insure there are no dangling BOOT#### options.
 
