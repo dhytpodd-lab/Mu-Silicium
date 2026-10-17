@@ -67,6 +67,8 @@ APRIORI DXE {
   INF Binaries/sapphiren/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
+  INF Binaries/sapphiren/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
+  INF Binaries/sapphiren/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
 
   INF Binaries/generic/QcomPkg/Drivers/XhciPciEmulationDxe/XhciPciEmulationDxe.inf
   # Binary SDM670 XhciDxe crashes on hot-plug (RaiseTpl 0x10 > 0x8), use open-source one
@@ -78,8 +80,6 @@ APRIORI DXE {
   INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
   INF Binaries/sapphiren/QcomPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
-  INF Binaries/sapphiren/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
-  INF Binaries/sapphiren/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/ButtonsDxe/ButtonsDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/TsensDxe/TsensDxe.inf
 

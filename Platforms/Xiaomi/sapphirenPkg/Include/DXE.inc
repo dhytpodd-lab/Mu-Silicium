@@ -72,6 +72,8 @@
   INF Binaries/sapphiren/QcomPkg/Drivers/TsensDxe/TsensDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/DDRInfoDxe/DDRInfoDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
+  INF Binaries/sapphiren/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
+  INF Binaries/sapphiren/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
 
   INF Binaries/generic/QcomPkg/Drivers/XhciPciEmulationDxe/XhciPciEmulationDxe.inf
   # Binary SDM670 XhciDxe crashes on hot-plug (RaiseTpl 0x10 > 0x8), use open-source one
@@ -83,8 +85,6 @@
   INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
   INF Binaries/sapphiren/QcomPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
-  INF Binaries/sapphiren/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
-  INF Binaries/sapphiren/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/HashDxe/HashDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/CipherDxe/CipherDxe.inf
   INF Binaries/sapphiren/QcomPkg/Drivers/MacDxe/MacDxe.inf
