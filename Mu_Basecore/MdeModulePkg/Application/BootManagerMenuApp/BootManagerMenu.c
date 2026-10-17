@@ -1234,6 +1234,8 @@ BootManagerMenuEntry (
           break;
       }
     }
+  }
+
   if (PollTimer != NULL) {
     gBS->CloseEvent (PollTimer);
   }
