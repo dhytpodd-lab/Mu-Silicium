@@ -102,6 +102,98 @@ FilterNoUSB (
   return (FALSE == IsDevicePathUSB (DevicePath));
 }
 
+typedef struct _QCOM_USB_CONFIG_PROTOCOL QCOM_USB_CONFIG_PROTOCOL;
+
+typedef EFI_STATUS (EFIAPI *QCOM_USB_CONFIG_START_CONTROLLER) (
+  IN QCOM_USB_CONFIG_PROTOCOL *This,
+  IN UINT8                     CoreNum,
+  IN UINT8                     ModeType
+  );
+
+typedef EFI_STATUS (EFIAPI *QCOM_USB_CONFIG_STOP_CONTROLLER) (
+  IN QCOM_USB_CONFIG_PROTOCOL *This,
+  IN UINT8                     CoreNum,
+  IN UINT8                     ModeType
+  );
+
+typedef EFI_STATUS (EFIAPI *QCOM_USB_CONFIG_TOGGLE_MODE) (
+  IN QCOM_USB_CONFIG_PROTOCOL *This,
+  IN UINT8                     CoreNum
+  );
+
+struct _QCOM_USB_CONFIG_PROTOCOL {
+  UINT64                           Version;
+  VOID                            *Func1;
+  VOID                            *ConfigUsb;
+  VOID                            *Func3;
+  VOID                            *Func4;
+  VOID                            *Func5;
+  VOID                            *Func6;
+  VOID                            *Func7;
+  VOID                            *Func8;
+  VOID                            *Reserved1;
+  QCOM_USB_CONFIG_START_CONTROLLER StartController;
+  QCOM_USB_CONFIG_STOP_CONTROLLER  StopController;
+  VOID                            *Func12;
+  VOID                            *Func13;
+  QCOM_USB_CONFIG_TOGGLE_MODE      ToggleMode;
+  VOID                            *Func15;
+  VOID                            *Func16;
+  UINT32                           CoreNum;
+  UINT32                           ModeType;
+};
+
+typedef struct _EFI_USB_PWR_CTRL_PROTOCOL EFI_USB_PWR_CTRL_PROTOCOL;
+
+typedef EFI_STATUS (EFIAPI *EFI_USB_PWR_CTRL_SET_VBUS_EN) (
+  IN UINT8   PortIndex,
+  IN BOOLEAN Enable
+  );
+
+struct _EFI_USB_PWR_CTRL_PROTOCOL {
+  UINT64                       Version;
+  VOID                        *Reserved[9];
+  EFI_USB_PWR_CTRL_SET_VBUS_EN SetVbusEn;
+};
+
+STATIC
+VOID
+EnsureUsbHostMode (
+  VOID
+  )
+{
+  EFI_STATUS                 Status;
+  EFI_USB_PWR_CTRL_PROTOCOL *UsbPwrCtrl = NULL;
+  QCOM_USB_CONFIG_PROTOCOL  *UsbConfig  = NULL;
+  STATIC EFI_GUID            UsbConfigProtocolGuid = {
+    0xe722b03f, 0xb250, 0x42ce, { 0x8e, 0xbd, 0x5b, 0xd5, 0x18, 0x12, 0xd0, 0x37 }
+  };
+  STATIC EFI_GUID            UsbPwrCtrlProtocolGuid = {
+    0xe07df17e, 0xe79e, 0x4150, { 0x93, 0x78, 0x50, 0x62, 0x3a, 0x14, 0x99, 0x4a }
+  };
+
+  // 1. Enable 5V VBUS boost on Port 0
+  Status = gBS->LocateProtocol (&UsbPwrCtrlProtocolGuid, NULL, (VOID **)&UsbPwrCtrl);
+  if (!EFI_ERROR (Status) && (UsbPwrCtrl != NULL) && (UsbPwrCtrl->SetVbusEn != NULL)) {
+    DEBUG ((DEBUG_WARN, "[USB] Ensuring 5V VBUS on Port 0...\n"));
+    UsbPwrCtrl->SetVbusEn (0, TRUE);
+  }
+
+  // 2. Locate UsbConfigProtocol and ensure Host Mode (ModeType 1)
+  Status = gBS->LocateProtocol (&UsbConfigProtocolGuid, NULL, (VOID **)&UsbConfig);
+  if (!EFI_ERROR (Status) && (UsbConfig != NULL)) {
+    DEBUG ((DEBUG_WARN, "[USB] UsbConfig found: CoreNum=%d, ModeType=%d\n", UsbConfig->CoreNum, UsbConfig->ModeType));
+    if (UsbConfig->ModeType != 1) { // 1 = USB_HOST_MODE
+      DEBUG ((DEBUG_WARN, "[USB] Switching UsbConfig to Host Mode (1)...\n"));
+      if (UsbConfig->StartController != NULL) {
+        Status = UsbConfig->StartController (UsbConfig, 0, 1);
+        DEBUG ((DEBUG_WARN, "[USB] StartController(0, 1) Status = %r\n", Status));
+        gBS->Stall (150000);
+      }
+    }
+  }
+}
+
 STATIC
 VOID
 ConnectUsbControllers (
@@ -115,6 +207,9 @@ ConnectUsbControllers (
   UINTN       Pass;
 
   DEBUG ((DEBUG_INFO, "%a: Connecting USB controllers...\n", __FUNCTION__));
+
+  // 0. Ensure USB Controller is in Host Mode (ModeType 1) and VBUS is powered
+  EnsureUsbHostMode ();
 
   // 1. Connect PCI I/O controllers (attaches XhciDxe to XhciPciEmulation)
   Status = gBS->LocateHandleBuffer (

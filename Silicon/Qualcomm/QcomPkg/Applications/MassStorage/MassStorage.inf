@@ -42,3 +42,4 @@
   gEfiUsbMsdProtocolGuid
   gEfiBlockIoProtocolGuid
   gEfiUsbPwrCtrlProtocolGuid
+  gQcomUsbConfigProtocolGuid

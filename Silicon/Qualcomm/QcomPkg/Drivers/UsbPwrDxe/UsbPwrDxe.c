@@ -2,6 +2,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiDriverEntryPoint.h>
+#include <Protocol/QcomUsbConfig.h>
 
 typedef struct _EFI_USB_PWR_CTRL_PROTOCOL EFI_USB_PWR_CTRL_PROTOCOL;
 
@@ -31,36 +32,51 @@ UsbPwrDxeEntry (
 {
   EFI_STATUS                 Status;
   EFI_USB_PWR_CTRL_PROTOCOL *UsbPwrCtrl = NULL;
+  QCOM_USB_CONFIG_PROTOCOL  *UsbConfig  = NULL;
   STATIC EFI_GUID            UsbPwrCtrlGuid = {
     0xE07DF17E, 0xE79E, 0x4150, { 0x93, 0x78, 0x50, 0x62, 0x3A, 0x14, 0x99, 0x4A }
   };
+  STATIC EFI_GUID            UsbConfigGuid = QCOM_USB_CONFIG_PROTOCOL_GUID;
 
   DEBUG ((EFI_D_WARN, "[UsbPwr] ========================================\n"));
-  DEBUG ((EFI_D_WARN, "[UsbPwr] Initializing USB Type-C Power (OTG VBUS)...\n"));
+  DEBUG ((EFI_D_WARN, "[UsbPwr] Initializing USB Type-C Host & Power...\n"));
 
   Status = gBS->LocateProtocol (&UsbPwrCtrlGuid, NULL, (VOID **)&UsbPwrCtrl);
-  if (EFI_ERROR (Status) || (UsbPwrCtrl == NULL)) {
-    DEBUG ((EFI_D_ERROR, "[UsbPwr] ERROR: Failed to locate UsbPwrCtrl protocol: %r\n", Status));
-    return Status;
-  }
+  if (!EFI_ERROR (Status) && (UsbPwrCtrl != NULL)) {
+    DEBUG ((EFI_D_WARN, "[UsbPwr] Found UsbPwrCtrl protocol (Version 0x%lx)\n", UsbPwrCtrl->Version));
 
-  DEBUG ((EFI_D_WARN, "[UsbPwr] Found UsbPwrCtrl protocol (Version 0x%lx)\n", UsbPwrCtrl->Version));
+    if (UsbPwrCtrl->SetVbusEn != NULL) {
+      DEBUG ((EFI_D_WARN, "[UsbPwr] Enabling 5V VBUS boost on Port 0...\n"));
+      Status = UsbPwrCtrl->SetVbusEn (0, TRUE);
+      DEBUG ((EFI_D_WARN, "[UsbPwr] SetVbusEn Status = %r\n", Status));
+    }
 
-  if (UsbPwrCtrl->SetVbusEn != NULL) {
-    DEBUG ((EFI_D_WARN, "[UsbPwr] Enabling 5V VBUS on Port 0...\n"));
-    Status = UsbPwrCtrl->SetVbusEn (0, TRUE);
-    DEBUG ((EFI_D_WARN, "[UsbPwr] SetVbusEn Status = %r\n", Status));
+    if (UsbPwrCtrl->SetVconnEn != NULL) {
+      DEBUG ((EFI_D_WARN, "[UsbPwr] Enabling VCONN on Port 0...\n"));
+      Status = UsbPwrCtrl->SetVconnEn (0, TRUE);
+      DEBUG ((EFI_D_WARN, "[UsbPwr] SetVconnEn Status = %r\n", Status));
+    }
   } else {
-    DEBUG ((EFI_D_ERROR, "[UsbPwr] SetVbusEn function pointer is NULL!\n"));
+    DEBUG ((EFI_D_WARN, "[UsbPwr] UsbPwrCtrl not found: %r\n", Status));
   }
 
-  if (UsbPwrCtrl->SetVconnEn != NULL) {
-    DEBUG ((EFI_D_WARN, "[UsbPwr] Enabling VCONN on Port 0...\n"));
-    Status = UsbPwrCtrl->SetVconnEn (0, TRUE);
-    DEBUG ((EFI_D_WARN, "[UsbPwr] SetVconnEn Status = %r\n", Status));
+  // Switch USB controller to Host Mode (Mode 1)
+  Status = gBS->LocateProtocol (&UsbConfigGuid, NULL, (VOID **)&UsbConfig);
+  if (!EFI_ERROR (Status) && (UsbConfig != NULL)) {
+    DEBUG ((EFI_D_WARN, "[UsbPwr] Found UsbConfig: CoreNum=%d, ModeType=%d\n", UsbConfig->CoreNum, UsbConfig->ModeType));
+    if (UsbConfig->ModeType != USB_HOST_MODE) {
+      DEBUG ((EFI_D_WARN, "[UsbPwr] Switching USB controller to Host Mode (1)...\n"));
+      if (UsbConfig->StartController != NULL) {
+        Status = UsbConfig->StartController (UsbConfig, 0, USB_HOST_MODE);
+        DEBUG ((EFI_D_WARN, "[UsbPwr] StartController(0, 1) Status = %r\n", Status));
+        gBS->Stall (100000); // 100ms
+      }
+    }
+  } else {
+    DEBUG ((EFI_D_WARN, "[UsbPwr] UsbConfig protocol not located: %r\n", Status));
   }
 
-  DEBUG ((EFI_D_WARN, "[UsbPwr] USB Power Initialization Complete!\n"));
+  DEBUG ((EFI_D_WARN, "[UsbPwr] USB Initialization Complete!\n"));
   DEBUG ((EFI_D_WARN, "[UsbPwr] ========================================\n"));
 
   return EFI_SUCCESS;
