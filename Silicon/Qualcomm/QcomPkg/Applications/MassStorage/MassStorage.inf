@@ -23,6 +23,7 @@
   BootGraphicsLib
   DevicePathLib
   UefiLib
+  BaseMemoryLib
 
 [Guids]
   gEfiUfsLU0Guid

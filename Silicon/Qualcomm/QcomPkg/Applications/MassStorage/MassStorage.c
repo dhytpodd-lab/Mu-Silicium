@@ -5,6 +5,7 @@
 #include <Library/DevicePathLib.h>
 #include <Library/BootGraphics.h>
 #include <Library/UefiLib.h>
+#include <Library/BaseMemoryLib.h>
 
 #include <Protocol/EFIUsbMsd.h>
 
