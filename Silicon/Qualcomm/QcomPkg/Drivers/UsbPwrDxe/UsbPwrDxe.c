@@ -2,7 +2,6 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiDriverEntryPoint.h>
-#include <Protocol/QcomUsbConfig.h>
 
 typedef struct _EFI_USB_PWR_CTRL_PROTOCOL EFI_USB_PWR_CTRL_PROTOCOL;
 
@@ -32,14 +31,12 @@ UsbPwrDxeEntry (
 {
   EFI_STATUS                 Status;
   EFI_USB_PWR_CTRL_PROTOCOL *UsbPwrCtrl = NULL;
-  QCOM_USB_CONFIG_PROTOCOL  *UsbConfig  = NULL;
   STATIC EFI_GUID            UsbPwrCtrlGuid = {
     0xE07DF17E, 0xE79E, 0x4150, { 0x93, 0x78, 0x50, 0x62, 0x3A, 0x14, 0x99, 0x4A }
   };
-  STATIC EFI_GUID            UsbConfigGuid = QCOM_USB_CONFIG_PROTOCOL_GUID;
 
   DEBUG ((EFI_D_WARN, "[UsbPwr] ========================================\n"));
-  DEBUG ((EFI_D_WARN, "[UsbPwr] Initializing USB Type-C Host & Power...\n"));
+  DEBUG ((EFI_D_WARN, "[UsbPwr] Initializing USB Type-C OTG Power...\n"));
 
   Status = gBS->LocateProtocol (&UsbPwrCtrlGuid, NULL, (VOID **)&UsbPwrCtrl);
   if (!EFI_ERROR (Status) && (UsbPwrCtrl != NULL)) {
@@ -60,23 +57,7 @@ UsbPwrDxeEntry (
     DEBUG ((EFI_D_WARN, "[UsbPwr] UsbPwrCtrl not found: %r\n", Status));
   }
 
-  // Switch USB controller to Host Mode (Mode 1)
-  Status = gBS->LocateProtocol (&UsbConfigGuid, NULL, (VOID **)&UsbConfig);
-  if (!EFI_ERROR (Status) && (UsbConfig != NULL)) {
-    DEBUG ((EFI_D_WARN, "[UsbPwr] Found UsbConfig: CoreNum=%d, ModeType=%d\n", UsbConfig->CoreNum, UsbConfig->ModeType));
-    if (UsbConfig->ModeType != USB_HOST_MODE) {
-      DEBUG ((EFI_D_WARN, "[UsbPwr] Switching USB controller to Host Mode (1)...\n"));
-      if (UsbConfig->StartController != NULL) {
-        Status = UsbConfig->StartController (UsbConfig, 0, USB_HOST_MODE);
-        DEBUG ((EFI_D_WARN, "[UsbPwr] StartController(0, 1) Status = %r\n", Status));
-        gBS->Stall (100000); // 100ms
-      }
-    }
-  } else {
-    DEBUG ((EFI_D_WARN, "[UsbPwr] UsbConfig protocol not located: %r\n", Status));
-  }
-
-  DEBUG ((EFI_D_WARN, "[UsbPwr] USB Initialization Complete!\n"));
+  DEBUG ((EFI_D_WARN, "[UsbPwr] USB Power Initialization Complete!\n"));
   DEBUG ((EFI_D_WARN, "[UsbPwr] ========================================\n"));
 
   return EFI_SUCCESS;

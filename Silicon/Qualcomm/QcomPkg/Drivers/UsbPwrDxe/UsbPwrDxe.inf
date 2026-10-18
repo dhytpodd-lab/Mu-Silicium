@@ -20,7 +20,6 @@
 
 [Protocols]
   gEfiUsbPwrCtrlProtocolGuid
-  gQcomUsbConfigProtocolGuid
 
 [Depex]
   gEfiUsbPwrCtrlProtocolGuid

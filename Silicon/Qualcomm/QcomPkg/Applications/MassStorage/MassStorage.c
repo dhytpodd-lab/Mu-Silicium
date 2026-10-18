@@ -8,7 +8,6 @@
 #include <Library/BaseMemoryLib.h>
 
 #include <Protocol/EFIUsbMsd.h>
-#include <Protocol/QcomUsbConfig.h>
 
 #include "MassStorage.h"
 
@@ -138,16 +137,6 @@ MassStorageStart ()
   Status = mUsbMsdProtocol->StopDevice (mUsbMsdProtocol);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "%a: Failed to Stop USB Device! Status = %r\n", __FUNCTION__, Status));
-  }
-
-  // Restore UsbConfig Host mode (Mode 1)
-  {
-    QCOM_USB_CONFIG_PROTOCOL *UsbConfig = NULL;
-    Status = gBS->LocateProtocol (&gQcomUsbConfigProtocolGuid, NULL, (VOID **)&UsbConfig);
-    if (!EFI_ERROR (Status) && (UsbConfig != NULL) && (UsbConfig->StartController != NULL)) {
-      DEBUG ((EFI_D_WARN, "%a: Restoring Host mode for UsbConfig...\n", __FUNCTION__));
-      UsbConfig->StartController (UsbConfig, 0, USB_HOST_MODE);
-    }
   }
 
   // Restore VBUS boost for Host / OTG mode
