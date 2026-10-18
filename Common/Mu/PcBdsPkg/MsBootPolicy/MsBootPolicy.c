@@ -290,7 +290,11 @@ LoadFileToBufferChunked (
 
   DEBUG ((DEBUG_WARN, "[BDS] Loading %s (%u MB) in 64KB chunks...\n", FileName, (UINT32)(FileSize / (1024 * 1024))));
 
-  PhysicalBuffer = 0x90000000;
+  if ((FileName[0] == L'v') || (FileName[0] == L'I')) {
+    PhysicalBuffer = 0x90000000;
+  } else {
+    PhysicalBuffer = 0xA0000000;
+  }
   Status = gBS->AllocatePages (
                   AllocateAddress,
                   EfiBootServicesData,
@@ -927,7 +931,7 @@ SelectAndBootDevice (
       if (FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") || FileExistsOnHandle (Handles[Index], L"Image")) {
         CHAR16 *KernelFile = FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") ? L"vmlinuz-linux" : L"Image";
         STATIC CONST CHAR16 LinuxCmdLine[] =
-          L"console=tty0 root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait initrd=\\initramfs-linux.img clk_ignore_unused pd_ignore_unused efi=debug ignore_loglevel";
+          L"console=tty0 earlycon=efifb root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait acpi=force clk_ignore_unused pd_ignore_unused efi=debug ignore_loglevel";
         VOID                      *KernelBuffer = NULL;
         UINTN                      KernelSize   = 0;
         EFI_HANDLE                 EntryImage   = NULL;
