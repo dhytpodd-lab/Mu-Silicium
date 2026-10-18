@@ -290,12 +290,21 @@ LoadFileToBufferChunked (
 
   DEBUG ((DEBUG_WARN, "[BDS] Loading %s (%u MB) in 64KB chunks...\n", FileName, (UINT32)(FileSize / (1024 * 1024))));
 
+  PhysicalBuffer = 0x90000000;
   Status = gBS->AllocatePages (
-                  AllocateAnyPages,
+                  AllocateAddress,
                   EfiBootServicesData,
                   EFI_SIZE_TO_PAGES (FileSize),
                   &PhysicalBuffer
                   );
+  if (EFI_ERROR (Status)) {
+    Status = gBS->AllocatePages (
+                    AllocateAnyPages,
+                    EfiBootServicesData,
+                    EFI_SIZE_TO_PAGES (FileSize),
+                    &PhysicalBuffer
+                    );
+  }
   if (EFI_ERROR (Status) || (PhysicalBuffer == 0)) {
     DEBUG ((DEBUG_ERROR, "[BDS] Failed to allocate %u pages for %s: %r\n", (UINT32)EFI_SIZE_TO_PAGES (FileSize), FileName, Status));
     File->Close (File);
