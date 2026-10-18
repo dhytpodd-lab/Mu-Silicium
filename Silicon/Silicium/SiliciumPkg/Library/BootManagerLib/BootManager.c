@@ -18,6 +18,7 @@
 #include <Library/BootGraphicsLib.h>
 #include <Library/BootGraphics.h>
 #include <Library/PrintLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Protocol/PciIo.h>
 #include <Protocol/Usb2HostController.h>
 #include <Protocol/UsbIo.h>
@@ -89,17 +90,29 @@ IsUsbDevicePath (
   return FALSE;
 }
 
+STATIC CONST EFI_GUID mUfsLU0Guid = { 0x860845C1, 0xBE09, 0x4355, { 0x8B, 0xC1, 0x30, 0xD6, 0x4F, 0xF8, 0xE6, 0x3A } };
+STATIC CONST EFI_GUID mEspPartGuid = { 0x6FE7F2F4, 0xE67E, 0x4630, { 0xA1, 0x2C, 0x74, 0x05, 0xB1, 0x6F, 0x5C, 0xE9 } };
+
 STATIC
 BOOLEAN
 IsUfsLun0DiskDevicePath (
   IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
   )
 {
-  BOOLEAN IsLun0 = FALSE;
+  BOOLEAN IsLu0 = FALSE;
 
   while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
     if (DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) {
       return FALSE;
+    }
+
+    if ((DevicePathType (DevicePath) == HARDWARE_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == HW_VENDOR_DP))
+    {
+      VENDOR_DEVICE_PATH *VenHw = (VENDOR_DEVICE_PATH *)DevicePath;
+      if (CompareGuid (&VenHw->Guid, &mUfsLU0Guid)) {
+        IsLu0 = TRUE;
+      }
     }
 
     if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
@@ -107,14 +120,14 @@ IsUfsLun0DiskDevicePath (
     {
       UFS_DEVICE_PATH *UfsDp = (UFS_DEVICE_PATH *)DevicePath;
       if (UfsDp->Lun == 0) {
-        IsLun0 = TRUE;
+        IsLu0 = TRUE;
       }
     }
 
     DevicePath = NextDevicePathNode (DevicePath);
   }
 
-  return IsLun0;
+  return IsLu0;
 }
 
 STATIC
@@ -123,16 +136,25 @@ IsUfsEspDevicePath (
   IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
   )
 {
-  BOOLEAN IsLun0 = FALSE;
-  BOOLEAN IsEsp  = FALSE;
+  BOOLEAN IsLu0 = FALSE;
+  BOOLEAN IsEsp = FALSE;
 
   while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
+    if ((DevicePathType (DevicePath) == HARDWARE_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == HW_VENDOR_DP))
+    {
+      VENDOR_DEVICE_PATH *VenHw = (VENDOR_DEVICE_PATH *)DevicePath;
+      if (CompareGuid (&VenHw->Guid, &mUfsLU0Guid)) {
+        IsLu0 = TRUE;
+      }
+    }
+
     if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
         (DevicePathSubType (DevicePath) == MSG_UFS_DP))
     {
       UFS_DEVICE_PATH *UfsDp = (UFS_DEVICE_PATH *)DevicePath;
       if (UfsDp->Lun == 0) {
-        IsLun0 = TRUE;
+        IsLu0 = TRUE;
       }
     }
 
@@ -140,7 +162,7 @@ IsUfsEspDevicePath (
         (DevicePathSubType (DevicePath) == MEDIA_HARDDRIVE_DP))
     {
       HARDDRIVE_DEVICE_PATH *Hd = (HARDDRIVE_DEVICE_PATH *)DevicePath;
-      if (Hd->PartitionNumber == 19) {
+      if ((Hd->PartitionNumber == 19) || CompareGuid ((EFI_GUID *)Hd->Signature, &mEspPartGuid)) {
         IsEsp = TRUE;
       }
     }
@@ -148,7 +170,7 @@ IsUfsEspDevicePath (
     DevicePath = NextDevicePathNode (DevicePath);
   }
 
-  return (IsLun0 && IsEsp);
+  return (IsLu0 && IsEsp);
 }
 
 typedef struct _EFI_USB_PWR_CTRL_PROTOCOL EFI_USB_PWR_CTRL_PROTOCOL;
