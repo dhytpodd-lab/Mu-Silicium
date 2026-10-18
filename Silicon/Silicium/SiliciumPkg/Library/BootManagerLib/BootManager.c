@@ -117,6 +117,40 @@ IsUfsLun0DiskDevicePath (
   return IsLun0;
 }
 
+STATIC
+BOOLEAN
+IsUfsEspDevicePath (
+  IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
+  )
+{
+  BOOLEAN IsLun0 = FALSE;
+  BOOLEAN IsEsp  = FALSE;
+
+  while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
+    if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == MSG_UFS_DP))
+    {
+      UFS_DEVICE_PATH *UfsDp = (UFS_DEVICE_PATH *)DevicePath;
+      if (UfsDp->Lun == 0) {
+        IsLun0 = TRUE;
+      }
+    }
+
+    if ((DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == MEDIA_HARDDRIVE_DP))
+    {
+      HARDDRIVE_DEVICE_PATH *Hd = (HARDDRIVE_DEVICE_PATH *)DevicePath;
+      if (Hd->PartitionNumber == 19) {
+        IsEsp = TRUE;
+      }
+    }
+
+    DevicePath = NextDevicePathNode (DevicePath);
+  }
+
+  return (IsLun0 && IsEsp);
+}
+
 typedef struct _EFI_USB_PWR_CTRL_PROTOCOL EFI_USB_PWR_CTRL_PROTOCOL;
 
 typedef EFI_STATUS (EFIAPI *EFI_USB_PWR_CTRL_SET_VBUS_EN) (
@@ -264,6 +298,7 @@ PlatformConnectStorage (
 
   DEBUG ((EFI_D_WARN, "[BDS] Connecting internal UFS LUN 0 storage...\n"));
 
+  // Pass 1: Connect raw LUN 0 disk (registers sda1..sda20 partition handles via PartitionDxe)
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
                   &gEfiBlockIoProtocolGuid,
@@ -275,8 +310,30 @@ PlatformConnectStorage (
     for (Index = 0; Index < HandleCount; Index++) {
       EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
       if ((DevicePath != NULL) && IsUfsLun0DiskDevicePath (DevicePath)) {
-        DEBUG ((EFI_D_WARN, "[BDS] Connecting UFS LUN 0 (sda)...\n"));
+        DEBUG ((EFI_D_WARN, "[BDS] Connecting UFS LUN 0 raw disk (sda)...\n"));
         gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+      }
+    }
+    FreePool (Handles);
+  }
+
+  // Small delay for child partition registration to complete
+  gBS->Stall (50000);
+
+  // Pass 2: Connect sda19 ESP partition handle (attaches DiskIoDxe & FatDxe, mounting SimpleFileSystem)
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiBlockIoProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
+      if ((DevicePath != NULL) && IsUfsEspDevicePath (DevicePath)) {
+        DEBUG ((EFI_D_WARN, "[BDS] Connecting UFS ESP partition (sda19)...\n"));
+        gBS->ConnectController (Handles[Index], NULL, NULL, FALSE);
       }
     }
     FreePool (Handles);

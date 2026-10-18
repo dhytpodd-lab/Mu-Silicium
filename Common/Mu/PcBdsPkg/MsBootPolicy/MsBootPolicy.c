@@ -165,6 +165,40 @@ IsUfsLun0DiskDevicePath (
 }
 
 STATIC
+BOOLEAN
+IsUfsEspDevicePath (
+  IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
+  )
+{
+  BOOLEAN IsLun0 = FALSE;
+  BOOLEAN IsEsp  = FALSE;
+
+  while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
+    if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == MSG_UFS_DP))
+    {
+      UFS_DEVICE_PATH *UfsDp = (UFS_DEVICE_PATH *)DevicePath;
+      if (UfsDp->Lun == 0) {
+        IsLun0 = TRUE;
+      }
+    }
+
+    if ((DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == MEDIA_HARDDRIVE_DP))
+    {
+      HARDDRIVE_DEVICE_PATH *Hd = (HARDDRIVE_DEVICE_PATH *)DevicePath;
+      if (Hd->PartitionNumber == 19) {
+        IsEsp = TRUE;
+      }
+    }
+
+    DevicePath = NextDevicePathNode (DevicePath);
+  }
+
+  return (IsLun0 && IsEsp);
+}
+
+STATIC
 VOID
 ConnectStorageControllers (
   VOID
@@ -175,8 +209,9 @@ ConnectStorageControllers (
   EFI_HANDLE  *Handles;
   UINTN       Index;
 
-  DEBUG ((DEBUG_INFO, "%a: Connecting internal UFS LUN 0 storage...\n", __FUNCTION__));
+  DEBUG ((DEBUG_WARN, "%a: Connecting internal UFS LUN 0 storage...\n", __FUNCTION__));
 
+  // Pass 1: Connect raw LUN 0 disk
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
                   &gEfiBlockIoProtocolGuid,
@@ -188,8 +223,30 @@ ConnectStorageControllers (
     for (Index = 0; Index < HandleCount; Index++) {
       EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
       if ((DevicePath != NULL) && IsUfsLun0DiskDevicePath (DevicePath)) {
-        DEBUG ((DEBUG_INFO, "%a: Connecting UFS LUN 0 (sda)...\n", __FUNCTION__));
+        DEBUG ((DEBUG_WARN, "%a: Connecting UFS LUN 0 raw disk (sda)...\n", __FUNCTION__));
         gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+      }
+    }
+    FreePool (Handles);
+  }
+
+  // Small delay
+  gBS->Stall (50000);
+
+  // Pass 2: Connect sda19 ESP partition handle
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiBlockIoProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
+      if ((DevicePath != NULL) && IsUfsEspDevicePath (DevicePath)) {
+        DEBUG ((DEBUG_WARN, "%a: Connecting UFS ESP partition (sda19)...\n", __FUNCTION__));
+        gBS->ConnectController (Handles[Index], NULL, NULL, FALSE);
       }
     }
     FreePool (Handles);
@@ -533,6 +590,19 @@ SelectAndBootDevice (
 
   SortHandles (Handles, HandleCount);
 
+  // Prioritize UFS ESP partition (sda19) to front of list
+  for (Index = 0; Index < HandleCount; Index++) {
+    EFI_DEVICE_PATH_PROTOCOL *Dp = DevicePathFromHandle (Handles[Index]);
+    if ((Dp != NULL) && IsUfsEspDevicePath (Dp)) {
+      if (Index > 0) {
+        EFI_HANDLE TempH = Handles[Index];
+        Handles[Index] = Handles[0];
+        Handles[0] = TempH;
+      }
+      break;
+    }
+  }
+
   Status = EFI_DEVICE_ERROR;
   for (Index = 0; Index < HandleCount; Index++) {
     DevicePath = DevicePathFromHandle (Handles[Index]);
@@ -547,8 +617,7 @@ SelectAndBootDevice (
       continue;
     }
 
-    DEBUG ((DEBUG_INFO, "Selecting device %s", TmpStr));
-    DEBUG ((DEBUG_INFO, "\n"));
+    DEBUG ((DEBUG_WARN, "[BDS] Boot attempt (%d/%d): %s\n", (UINT32)(Index + 1), (UINT32)HandleCount, TmpStr));
     if (MsBootPolicyLibIsDeviceBootable (Handles[Index])) {
       EfiBootManagerInitializeLoadOption (
         &BootOption,
@@ -572,14 +641,15 @@ SelectAndBootDevice (
       EfiBootManagerBoot (&BootOption);
       Status = BootOption.Status;
 
+      DEBUG ((DEBUG_WARN, "[BDS] Boot attempt result: %r\n", Status));
+
       EfiBootManagerFreeLoadOption (&BootOption);
       // if EFI_SUCCESS, device was booted, and the return is back to setup
       if (Status == EFI_SUCCESS) {
         break;
       }
     } else {
-      DEBUG ((DEBUG_WARN, "Device %s\n", TmpStr));
-      DEBUG ((DEBUG_WARN, " was blocked from booting\n"));
+      DEBUG ((DEBUG_WARN, "Device %s was blocked from booting\n", TmpStr));
     }
 
     FreePool (TmpStr);
