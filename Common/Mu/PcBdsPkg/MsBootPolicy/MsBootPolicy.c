@@ -255,63 +255,33 @@ PatchPowerUpSequence (
   IN UINTN  KernelSize
   )
 {
-  CONST CHAR8 TargetStr[] = "phy init failed";
-  UINTN       StrLen = sizeof (TargetStr) - 1;
-  UINTN       StrOffset = 0;
-  BOOLEAN     FoundStr = FALSE;
-  UINTN       i;
+  UINTN i, k;
 
-  for (i = 0; i < KernelSize - StrLen; i++) {
-    if (CompareMem (&Buf[i], TargetStr, StrLen) == 0) {
-      StrOffset = i;
-      FoundStr = TRUE;
-      DEBUG ((DEBUG_WARN, "[BDS] Found '%a' at offset 0x%lx\n", TargetStr, (UINT64)StrOffset));
-      break;
-    }
-  }
-
-  if (!FoundStr) {
-    DEBUG ((DEBUG_WARN, "[BDS] String '%a' not found in kernel\n", TargetStr));
-    return FALSE;
-  }
-
-  for (i = 0; i < KernelSize - 4; i += 4) {
+  // Search for: ldr Wt, [Xn, #0x344]
+  // In ARM64: (insn & 0xfffffc00) == 0xb9434400
+  for (i = 0; i < KernelSize - 32; i += 4) {
     UINT32 Insn = *(UINT32 *)&Buf[i];
-    if ((Insn & 0x9f000000) == 0x90000000) {
-      INT64 ImmLo = (Insn >> 29) & 0x3;
-      INT64 ImmHi = (Insn >> 5) & 0x7ffff;
-      INT64 Imm = (ImmHi << 2) | ImmLo;
-      if (Imm & 0x100000) {
-        Imm |= ~0x1fffffLL;
-      }
-      INT64 TargetPage = ((INT64)i & ~0xfffLL) + (Imm << 12);
-      if (TargetPage == ((INT64)StrOffset & ~0xfffLL)) {
-        if (i + 4 < KernelSize) {
-          UINT32 NextInsn = *(UINT32 *)&Buf[i + 4];
-          if ((NextInsn & 0xffc00000) == 0x91000000) {
-            UINT32 AddOffset = (NextInsn >> 10) & 0xfff;
-            if (AddOffset == ((UINT32)StrOffset & 0xfff)) {
-              DEBUG ((DEBUG_WARN, "[BDS] Found ADRP/ADD to 'phy init failed' at offset 0x%lx\n", (UINT64)i));
-              UINTN StartSearch = (i > 1200) ? (i - 1200) : 0;
-              UINTN j;
-              for (j = i; j >= StartSearch; j -= 4) {
-                UINT32 BackInsn = *(UINT32 *)&Buf[j];
-                if ((BackInsn & 0xffc07fff) == 0xa9807bfd) {
-                  DEBUG ((DEBUG_WARN, "[BDS] Found ufs_qcom_power_up_sequence entry at 0x%lx (insn: 0x%08x)\n", (UINT64)j, BackInsn));
-                  *(UINT32 *)&Buf[j]     = 0xd2800000;
-                  *(UINT32 *)&Buf[j + 4] = 0xd65f03c0;
-                  DEBUG ((DEBUG_WARN, "[BDS] Successfully stubbed ufs_qcom_power_up_sequence to return 0!\n"));
-                  return TRUE;
-                }
-              }
-            }
-          }
+    if ((Insn & 0xfffffc00) == 0xb9434400) {
+      UINT32 Rt = Insn & 0x1f;
+      // Check the next 3 instructions for branch or test on Wt
+      for (k = 4; k <= 12; k += 4) {
+        UINT32 NextInsn = *(UINT32 *)&Buf[i + k];
+        if (((NextInsn & 0x7f00001f) == (0x34000000 | Rt)) || // cbz Wt
+            ((NextInsn & 0x7f00001f) == (0x35000000 | Rt)) || // cbnz Wt
+            ((NextInsn & 0xffe0001f) == (0x7100001f | (Rt << 5)))) // cmp Wt, #0
+        {
+          DEBUG ((DEBUG_WARN, "[BDS] Found phy->power_count check at 0x%lx (insn 0x%08x, branch 0x%08x at +%u)\n",
+                  (UINT64)i, Insn, NextInsn, (UINT32)k));
+          // Replace ldr Wt, [Xn, #0x344] with mov Wt, #0 (0x52800000 | Rt)
+          *(UINT32 *)&Buf[i] = 0x52800000 | Rt;
+          DEBUG ((DEBUG_WARN, "[BDS] Successfully patched phy->power_count with mov w%u, #0!\n", Rt));
+          return TRUE;
         }
       }
     }
   }
 
-  DEBUG ((DEBUG_WARN, "[BDS] Warning: ufs_qcom_power_up_sequence ADRP reference not found\n"));
+  DEBUG ((DEBUG_WARN, "[BDS] Warning: phy->power_count check not found\n"));
   return FALSE;
 }
 
