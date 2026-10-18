@@ -91,7 +91,65 @@ IsUsbDevicePath (
 }
 
 STATIC CONST EFI_GUID mUfsLU0Guid = { 0x860845C1, 0xBE09, 0x4355, { 0x8B, 0xC1, 0x30, 0xD6, 0x4F, 0xF8, 0xE6, 0x3A } };
+STATIC CONST EFI_GUID mUfsRPMBGuid = { 0x5397474E, 0xF75D, 0x44B3, { 0x8E, 0x57, 0xD9, 0x32, 0x4F, 0xCF, 0x6F, 0xE1 } };
 STATIC CONST EFI_GUID mEspPartGuid = { 0x6FE7F2F4, 0xE67E, 0x4630, { 0xA1, 0x2C, 0x74, 0x05, 0xB1, 0x6F, 0x5C, 0xE9 } };
+
+STATIC
+BOOLEAN
+IsUfsRpmbDevicePath (
+  IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
+  )
+{
+  while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
+    if ((DevicePathType (DevicePath) == HARDWARE_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == HW_VENDOR_DP))
+    {
+      VENDOR_DEVICE_PATH *VenHw = (VENDOR_DEVICE_PATH *)DevicePath;
+      if (CompareGuid (&VenHw->Guid, &mUfsRPMBGuid)) {
+        return TRUE;
+      }
+    }
+
+    DevicePath = NextDevicePathNode (DevicePath);
+  }
+
+  return FALSE;
+}
+
+STATIC
+VOID
+ProtectUfsRpmb (
+  VOID
+  )
+{
+  EFI_STATUS                 Status;
+  UINTN                      HandleCount;
+  EFI_HANDLE                 *Handles;
+  UINTN                      Index;
+  EFI_BLOCK_IO_PROTOCOL      *BlockIo;
+
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiBlockIoProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
+      if ((DevicePath != NULL) && IsUfsRpmbDevicePath (DevicePath)) {
+        DEBUG ((EFI_D_WARN, "%a: Protecting UFS RPMB handle (LUN 4) from bus lock...\n", __FUNCTION__));
+        gBS->DisconnectController (Handles[Index], NULL, NULL);
+        Status = gBS->HandleProtocol (Handles[Index], &gEfiBlockIoProtocolGuid, (VOID **)&BlockIo);
+        if (!EFI_ERROR (Status) && (BlockIo != NULL)) {
+          gBS->UninstallProtocolInterface (Handles[Index], &gEfiBlockIoProtocolGuid, BlockIo);
+        }
+      }
+    }
+    FreePool (Handles);
+  }
+}
 
 STATIC
 BOOLEAN
@@ -320,6 +378,9 @@ PlatformConnectStorage (
 
   DEBUG ((EFI_D_WARN, "[BDS] Connecting internal UFS LUN 0 storage...\n"));
 
+  // Protect RPMB before connecting any controllers
+  ProtectUfsRpmb ();
+
   // Pass 1: Connect raw LUN 0 disk (registers sda1..sda20 partition handles via PartitionDxe)
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
@@ -341,6 +402,9 @@ PlatformConnectStorage (
 
   // Small delay for child partition registration to complete
   gBS->Stall (50000);
+
+  // Protect RPMB again in case child drivers re-registered
+  ProtectUfsRpmb ();
 
   // Pass 2: Connect sda19 ESP partition handle (attaches DiskIoDxe & FatDxe, mounting SimpleFileSystem)
   Status = gBS->LocateHandleBuffer (

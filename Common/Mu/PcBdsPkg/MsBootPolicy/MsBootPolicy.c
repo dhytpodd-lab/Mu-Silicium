@@ -137,7 +137,98 @@ EnsureUsbPower (
 }
 
 STATIC CONST EFI_GUID mUfsLU0Guid = { 0x860845C1, 0xBE09, 0x4355, { 0x8B, 0xC1, 0x30, 0xD6, 0x4F, 0xF8, 0xE6, 0x3A } };
+STATIC CONST EFI_GUID mUfsRPMBGuid = { 0x5397474E, 0xF75D, 0x44B3, { 0x8E, 0x57, 0xD9, 0x32, 0x4F, 0xCF, 0x6F, 0xE1 } };
 STATIC CONST EFI_GUID mEspPartGuid = { 0x6FE7F2F4, 0xE67E, 0x4630, { 0xA1, 0x2C, 0x74, 0x05, 0xB1, 0x6F, 0x5C, 0xE9 } };
+
+STATIC
+BOOLEAN
+IsUfsRpmbDevicePath (
+  IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
+  )
+{
+  while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
+    if ((DevicePathType (DevicePath) == HARDWARE_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == HW_VENDOR_DP))
+    {
+      VENDOR_DEVICE_PATH *VenHw = (VENDOR_DEVICE_PATH *)DevicePath;
+      if (CompareGuid (&VenHw->Guid, &mUfsRPMBGuid)) {
+        return TRUE;
+      }
+    }
+
+    DevicePath = NextDevicePathNode (DevicePath);
+  }
+
+  return FALSE;
+}
+
+STATIC
+VOID
+ProtectUfsRpmb (
+  VOID
+  )
+{
+  EFI_STATUS                 Status;
+  UINTN                      HandleCount;
+  EFI_HANDLE                 *Handles;
+  UINTN                      Index;
+  EFI_BLOCK_IO_PROTOCOL      *BlockIo;
+
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiBlockIoProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
+      if ((DevicePath != NULL) && IsUfsRpmbDevicePath (DevicePath)) {
+        DEBUG ((DEBUG_WARN, "%a: Protecting UFS RPMB handle (LUN 4) from bus lock...\n", __FUNCTION__));
+        gBS->DisconnectController (Handles[Index], NULL, NULL);
+        Status = gBS->HandleProtocol (Handles[Index], &gEfiBlockIoProtocolGuid, (VOID **)&BlockIo);
+        if (!EFI_ERROR (Status) && (BlockIo != NULL)) {
+          gBS->UninstallProtocolInterface (Handles[Index], &gEfiBlockIoProtocolGuid, BlockIo);
+        }
+      }
+    }
+    FreePool (Handles);
+  }
+}
+
+STATIC
+BOOLEAN
+FileExistsOnHandle (
+  IN EFI_HANDLE Handle,
+  IN CHAR16     *FileName
+  )
+{
+  EFI_STATUS                       Status;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
+  EFI_FILE_PROTOCOL               *Root;
+  EFI_FILE_PROTOCOL               *File;
+
+  Status = gBS->HandleProtocol (Handle, &gEfiSimpleFileSystemProtocolGuid, (VOID **)&Fs);
+  if (EFI_ERROR (Status) || (Fs == NULL)) {
+    return FALSE;
+  }
+
+  Status = Fs->OpenVolume (Fs, &Root);
+  if (EFI_ERROR (Status) || (Root == NULL)) {
+    return FALSE;
+  }
+
+  Status = Root->Open (Root, &File, FileName, EFI_FILE_MODE_READ, 0);
+  if (!EFI_ERROR (Status) && (File != NULL)) {
+    File->Close (File);
+    Root->Close (Root);
+    return TRUE;
+  }
+
+  Root->Close (Root);
+  return FALSE;
+}
 
 STATIC
 BOOLEAN
@@ -232,6 +323,9 @@ ConnectStorageControllers (
 
   DEBUG ((DEBUG_WARN, "%a: Connecting internal UFS LUN 0 storage...\n", __FUNCTION__));
 
+  // Protect RPMB before connecting any controllers
+  ProtectUfsRpmb ();
+
   // Pass 1: Connect raw LUN 0 disk
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
@@ -253,6 +347,9 @@ ConnectStorageControllers (
 
   // Small delay
   gBS->Stall (50000);
+
+  // Protect RPMB again in case child drivers re-registered
+  ProtectUfsRpmb ();
 
   // Pass 2: Connect sda19 ESP partition handle
   Status = gBS->LocateHandleBuffer (
@@ -636,16 +733,56 @@ SelectAndBootDevice (
 
     DEBUG ((DEBUG_WARN, "[BDS] Boot attempt (%d/%d): %s\n", (UINT32)(Index + 1), (UINT32)HandleCount, TmpStr));
     if (MsBootPolicyLibIsDeviceBootable (Handles[Index])) {
+      EFI_DEVICE_PATH_PROTOCOL *BootPath         = NULL;
+      CHAR16                   *BootDesc         = L"MsTemp";
+      VOID                     *OptionalData     = NULL;
+      UINT32                    OptionalDataSize = 0;
+      BOOLEAN                   FreeBootPath     = FALSE;
+
+      if (FileExistsOnHandle (Handles[Index], L"vmlinuz-linux")) {
+        STATIC CONST CHAR16 LinuxCmdLine[] =
+          L"console=tty0 root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait initrd=\\initramfs-linux.img earlycon acpi=force clk_ignore_unused pd_ignore_unused";
+        DEBUG ((DEBUG_WARN, "[BDS] Found \\vmlinuz-linux! Directly booting Arch Linux ARM kernel...\n"));
+        BootPath         = FileDevicePath (Handles[Index], L"\\vmlinuz-linux");
+        BootDesc         = L"Arch Linux ARM";
+        OptionalData     = (VOID *)LinuxCmdLine;
+        OptionalDataSize = (UINT32)StrSize (LinuxCmdLine);
+        FreeBootPath     = TRUE;
+      } else if (FileExistsOnHandle (Handles[Index], L"Image")) {
+        STATIC CONST CHAR16 LinuxCmdLine[] =
+          L"console=tty0 root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait initrd=\\initramfs-linux.img earlycon acpi=force clk_ignore_unused pd_ignore_unused";
+        DEBUG ((DEBUG_WARN, "[BDS] Found \\Image! Directly booting Arch Linux ARM kernel...\n"));
+        BootPath         = FileDevicePath (Handles[Index], L"\\Image");
+        BootDesc         = L"Arch Linux ARM";
+        OptionalData     = (VOID *)LinuxCmdLine;
+        OptionalDataSize = (UINT32)StrSize (LinuxCmdLine);
+        FreeBootPath     = TRUE;
+      } else {
+        BootPath = DevicePathFromHandle (Handles[Index]);
+      }
+
+      if (BootPath == NULL) {
+        BootPath         = DevicePathFromHandle (Handles[Index]);
+        BootDesc         = L"MsTemp";
+        OptionalData     = NULL;
+        OptionalDataSize = 0;
+        FreeBootPath     = FALSE;
+      }
+
       EfiBootManagerInitializeLoadOption (
         &BootOption,
         LoadOptionNumberUnassigned,
         LoadOptionTypeBoot,
         LOAD_OPTION_ACTIVE,
-        L"MsTemp",
-        DevicePathFromHandle (Handles[Index]),
-        NULL,
-        0
+        BootDesc,
+        BootPath,
+        (UINT8 *)OptionalData,
+        OptionalDataSize
         );
+
+      if (FreeBootPath && (BootPath != NULL)) {
+        FreePool (BootPath);
+      }
 
       if ((ByFilter == FilterOnlyIPv4) || (ByFilter == FilterOnlyIPv6) || (ByFilter == FilterOnlyUSB)) {
         DEBUG ((DEBUG_INFO, "Attempting alternate boot...\n"));
@@ -654,6 +791,9 @@ SelectAndBootDevice (
           DEBUG ((DEBUG_ERROR, "Alternate boot set failed %r...\n", Status));
         }
       }
+
+      // Final protection of RPMB right before starting OS loader
+      ProtectUfsRpmb ();
 
       EfiBootManagerBoot (&BootOption);
       Status = BootOption.Status;
