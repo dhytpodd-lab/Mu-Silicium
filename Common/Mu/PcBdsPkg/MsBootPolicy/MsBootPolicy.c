@@ -198,6 +198,78 @@ ProtectUfsRpmb (
 }
 
 STATIC
+VOID
+PatchKernelForAcpiUfs (
+  IN VOID   *KernelBuffer,
+  IN UINTN   KernelSize
+  )
+{
+  CONST CHAR8 TargetSym[] = "devm_reset_controller_register";
+  CONST UINTN SymLen = sizeof (TargetSym); // includes null terminator
+  UINT8       *Buf = (UINT8 *)KernelBuffer;
+  UINTN       StrOffset = 0;
+  BOOLEAN     FoundStr = FALSE;
+  UINTN       i;
+
+  if ((KernelBuffer == NULL) || (KernelSize < 1024 * 1024)) {
+    return;
+  }
+
+  // 1. Search for symbol string in kernel symbol table
+  for (i = 0; i < KernelSize - SymLen; i++) {
+    if (CompareMem (&Buf[i], TargetSym, SymLen) == 0) {
+      StrOffset = i;
+      FoundStr = TRUE;
+      DEBUG ((DEBUG_WARN, "[BDS] Found '%a' at offset 0x%lx\n", TargetSym, (UINT64)StrOffset));
+      break;
+    }
+  }
+
+  if (FoundStr) {
+    // 2. Search for ksymtab entry referencing this string
+    for (i = 0; i < KernelSize - 8; i += 4) {
+      INT32 NameOffset = *(INT32 *)&Buf[i];
+      if ((INT64)i + (INT64)NameOffset == (INT64)StrOffset) {
+        // Value offset is 4 bytes before NameOffset in struct kernel_symbol
+        if (i >= 4) {
+          UINTN ValPos = i - 4;
+          INT32 ValOffset = *(INT32 *)&Buf[ValPos];
+          INT64 FuncAddr = (INT64)ValPos + (INT64)ValOffset;
+          if ((FuncAddr > 0) && ((UINTN)FuncAddr < KernelSize - 8)) {
+            DEBUG ((DEBUG_WARN, "[BDS] Found ksymtab at 0x%lx, function at 0x%lx\n", (UINT64)ValPos, (UINT64)FuncAddr));
+            // Patch function with: mov x0, #0 (0xd2800000); ret (0xd65f03c0)
+            *(UINT32 *)&Buf[FuncAddr]     = 0xd2800000;
+            *(UINT32 *)&Buf[FuncAddr + 4] = 0xd65f03c0;
+            DEBUG ((DEBUG_WARN, "[BDS] Successfully patched devm_reset_controller_register to return 0!\n"));
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  // Fallback: search for opcode signature around __dev_fwnode
+  // Code signature: 0x00, 0x00, 0x80, 0xf2, 0xc0, 0x03, 0x5f, 0xd6, 0x00, 0x54, 0x41, 0xf9
+  // (movk..., ret, ldr x0, [x0, #0x2a8])
+  {
+    STATIC CONST UINT8 Sig[] = { 0x00, 0x00, 0x80, 0xf2, 0xc0, 0x03, 0x5f, 0xd6, 0x00, 0x54, 0x41, 0xf9 };
+    for (i = 0; i < KernelSize - sizeof (Sig); i += 4) {
+      if (CompareMem (&Buf[i], Sig, sizeof (Sig)) == 0) {
+        UINTN LdrPos = i + 8; // Offset of 00 54 41 f9
+        DEBUG ((DEBUG_WARN, "[BDS] Found __dev_fwnode crash opcode at 0x%lx, patching with NULL check!\n", (UINT64)LdrPos));
+        // Replace ldr x0, [x0, #0x2a8] (0xf9415400) with cbz x0, +0x14 (0x340000a0)
+        // If x0 is NULL, jumps directly to ret, returning NULL safely
+        *(UINT32 *)&Buf[LdrPos] = 0x340000a0;
+        DEBUG ((DEBUG_WARN, "[BDS] Successfully patched __dev_fwnode with cbz x0, +0x14!\n"));
+        return;
+      }
+    }
+  }
+
+  DEBUG ((DEBUG_WARN, "[BDS] Warning: No patch target found in kernel buffer\n"));
+}
+
+STATIC
 BOOLEAN
 FileExistsOnHandle (
   IN EFI_HANDLE Handle,
@@ -931,7 +1003,7 @@ SelectAndBootDevice (
       if (FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") || FileExistsOnHandle (Handles[Index], L"Image")) {
         CHAR16 *KernelFile = FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") ? L"vmlinuz-linux" : L"Image";
         STATIC CONST CHAR16 LinuxCmdLine[] =
-          L"console=tty0 earlycon=efifb,ram keep_bootcon root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait acpi=force clk_ignore_unused pd_ignore_unused ignore_loglevel systemd.journald.forward_to_console=1 initcall_blacklist=ufs_qcom_pltform_init";
+          L"console=tty0 earlycon=efifb,ram keep_bootcon root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait acpi=force clk_ignore_unused pd_ignore_unused ignore_loglevel systemd.journald.forward_to_console=1";
         VOID                      *KernelBuffer = NULL;
         UINTN                      KernelSize   = 0;
         EFI_HANDLE                 EntryImage   = NULL;
@@ -960,6 +1032,9 @@ SelectAndBootDevice (
             }
           }
 
+          // Patch kernel in memory to fix ACPI UFS reset controller NULL pointer crash
+          PatchKernelForAcpiUfs (KernelBuffer, KernelSize);
+
           // Protect RPMB right before loading image
           ProtectUfsRpmb ();
 
@@ -979,6 +1054,7 @@ SelectAndBootDevice (
           if (!EFI_ERROR (Status) && (EntryImage != NULL)) {
             Status = gBS->HandleProtocol (EntryImage, &gEfiLoadedImageProtocolGuid, (VOID **)&ImageInfo);
             if (!EFI_ERROR (Status) && (ImageInfo != NULL)) {
+              PatchKernelForAcpiUfs (ImageInfo->ImageBase, ImageInfo->ImageSize);
               ImageInfo->LoadOptions     = (VOID *)LinuxCmdLine;
               ImageInfo->LoadOptionsSize = (UINT32)StrSize (LinuxCmdLine);
               DEBUG ((DEBUG_WARN, "[BDS] Set LoadOptions (%u bytes)\n", ImageInfo->LoadOptionsSize));
