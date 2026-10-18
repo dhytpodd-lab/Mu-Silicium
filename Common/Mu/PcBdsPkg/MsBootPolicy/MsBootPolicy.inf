@@ -52,10 +52,13 @@
   GraphicsConsoleHelperLib
 
 [Guids]
+  gEfiFileInfoGuid
+  gLinuxEfiInitrdMediaGuid
 
 [Protocols]
   gEfiSimpleFileSystemProtocolGuid
   gEfiLoadFileProtocolGuid
+  gEfiLoadFile2ProtocolGuid
   gEfiLoadedImageProtocolGuid
   gEfiPciIoProtocolGuid
   gEfiUsb2HcProtocolGuid

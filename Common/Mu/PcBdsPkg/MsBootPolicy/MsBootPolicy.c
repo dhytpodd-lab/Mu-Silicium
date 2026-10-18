@@ -231,6 +231,173 @@ FileExistsOnHandle (
 }
 
 STATIC
+EFI_STATUS
+LoadFileToBufferChunked (
+  IN  EFI_HANDLE  Handle,
+  IN  CHAR16      *FileName,
+  OUT VOID        **BufferOut,
+  OUT UINTN       *SizeOut
+  )
+{
+  EFI_STATUS                       Status;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
+  EFI_FILE_PROTOCOL               *Root = NULL;
+  EFI_FILE_PROTOCOL               *File = NULL;
+  EFI_FILE_INFO                   *FileInfo = NULL;
+  UINTN                            FileInfoSize = 0;
+  UINT8                           *Buffer = NULL;
+  UINTN                            FileSize = 0;
+  UINTN                            BytesRead = 0;
+  CONST UINTN                      ChunkSize = 256 * 1024;
+
+  *BufferOut = NULL;
+  *SizeOut   = 0;
+
+  Status = gBS->HandleProtocol (Handle, &gEfiSimpleFileSystemProtocolGuid, (VOID **)&Fs);
+  if (EFI_ERROR (Status) || (Fs == NULL)) {
+    return Status;
+  }
+
+  Status = Fs->OpenVolume (Fs, &Root);
+  if (EFI_ERROR (Status) || (Root == NULL)) {
+    return Status;
+  }
+
+  Status = Root->Open (Root, &File, FileName, EFI_FILE_MODE_READ, 0);
+  if (EFI_ERROR (Status) || (File == NULL)) {
+    Root->Close (Root);
+    return Status;
+  }
+
+  Status = File->GetInfo (File, &gEfiFileInfoGuid, &FileInfoSize, NULL);
+  if (Status == EFI_BUFFER_TOO_SMALL) {
+    FileInfo = AllocatePool (FileInfoSize);
+    if (FileInfo != NULL) {
+      Status = File->GetInfo (File, &gEfiFileInfoGuid, &FileInfoSize, FileInfo);
+      if (!EFI_ERROR (Status)) {
+        FileSize = (UINTN)FileInfo->FileSize;
+      }
+      FreePool (FileInfo);
+    }
+  }
+
+  if (FileSize == 0) {
+    File->Close (File);
+    Root->Close (Root);
+    return EFI_NOT_FOUND;
+  }
+
+  DEBUG ((DEBUG_WARN, "[BDS] Loading %s (%u MB) in 256KB chunks...\n", FileName, (UINT32)(FileSize / (1024 * 1024))));
+
+  Buffer = AllocatePool (FileSize);
+  if (Buffer == NULL) {
+    DEBUG ((DEBUG_ERROR, "[BDS] Failed to allocate %u bytes for %s!\n", (UINT32)FileSize, FileName));
+    File->Close (File);
+    Root->Close (Root);
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  BytesRead = 0;
+  while (BytesRead < FileSize) {
+    UINTN ToRead = ChunkSize;
+    if (BytesRead + ToRead > FileSize) {
+      ToRead = FileSize - BytesRead;
+    }
+
+    Status = File->Read (File, &ToRead, Buffer + BytesRead);
+    if (EFI_ERROR (Status) || (ToRead == 0)) {
+      DEBUG ((DEBUG_ERROR, "[BDS] Error reading %s at offset %u: %r\n", FileName, (UINT32)BytesRead, Status));
+      FreePool (Buffer);
+      File->Close (File);
+      Root->Close (Root);
+      return (EFI_ERROR (Status) ? Status : EFI_DEVICE_ERROR);
+    }
+
+    BytesRead += ToRead;
+
+    if (((BytesRead % (8 * 1024 * 1024)) < ChunkSize) || (BytesRead == FileSize)) {
+      DEBUG ((DEBUG_WARN, "[BDS] Loaded %u / %u MB (%u%%)...\n",
+        (UINT32)(BytesRead / (1024 * 1024)),
+        (UINT32)(FileSize / (1024 * 1024)),
+        (UINT32)((BytesRead * 100) / FileSize)));
+    }
+  }
+
+  File->Close (File);
+  Root->Close (Root);
+
+  DEBUG ((DEBUG_WARN, "[BDS] Successfully loaded %s (%u bytes) into RAM!\n", FileName, (UINT32)FileSize));
+
+  *BufferOut = Buffer;
+  *SizeOut   = FileSize;
+  return EFI_SUCCESS;
+}
+
+#pragma pack(1)
+typedef struct {
+  VENDOR_DEVICE_PATH          VendorMediaNode;
+  EFI_DEVICE_PATH_PROTOCOL    EndNode;
+} BDS_RAMDISK_DEVICE_PATH;
+#pragma pack()
+
+STATIC CONST BDS_RAMDISK_DEVICE_PATH mBdsRamdiskDevicePath = {
+  {
+    {
+      MEDIA_DEVICE_PATH,
+      MEDIA_VENDOR_DP,
+      { (UINT8)(sizeof (VENDOR_DEVICE_PATH)), (UINT8)((sizeof (VENDOR_DEVICE_PATH)) >> 8) }
+    },
+    LINUX_EFI_INITRD_MEDIA_GUID
+  },
+  {
+    END_DEVICE_PATH_TYPE,
+    END_ENTIRE_DEVICE_PATH_SUBTYPE,
+    { (UINT8)(sizeof (EFI_DEVICE_PATH_PROTOCOL)), (UINT8)((sizeof (EFI_DEVICE_PATH_PROTOCOL)) >> 8) }
+  }
+};
+
+STATIC VOID       *mBdsInitrdBuffer = NULL;
+STATIC UINTN       mBdsInitrdSize   = 0;
+STATIC EFI_HANDLE  mBdsInitrdHandle = NULL;
+
+STATIC
+EFI_STATUS
+EFIAPI
+BdsInitrdLoadFile2 (
+  IN EFI_LOAD_FILE2_PROTOCOL   *This,
+  IN EFI_DEVICE_PATH_PROTOCOL  *FilePath,
+  IN BOOLEAN                   BootPolicy,
+  IN OUT UINTN                 *BufferSize,
+  IN VOID                      *Buffer OPTIONAL
+  )
+{
+  if ((This == NULL) || (BufferSize == NULL) || (FilePath == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (BootPolicy) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if (mBdsInitrdSize == 0) {
+    return EFI_NOT_FOUND;
+  }
+
+  if ((Buffer == NULL) || (*BufferSize < mBdsInitrdSize)) {
+    *BufferSize = mBdsInitrdSize;
+    return EFI_BUFFER_TOO_SMALL;
+  }
+
+  CopyMem (Buffer, mBdsInitrdBuffer, mBdsInitrdSize);
+  *BufferSize = mBdsInitrdSize;
+  return EFI_SUCCESS;
+}
+
+STATIC EFI_LOAD_FILE2_PROTOCOL mBdsInitrdLoadFile2 = {
+  BdsInitrdLoadFile2
+};
+
+STATIC
 BOOLEAN
 IsUfsLun0DiskDevicePath (
   IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
@@ -733,77 +900,135 @@ SelectAndBootDevice (
 
     DEBUG ((DEBUG_WARN, "[BDS] Boot attempt (%d/%d): %s\n", (UINT32)(Index + 1), (UINT32)HandleCount, TmpStr));
     if (MsBootPolicyLibIsDeviceBootable (Handles[Index])) {
-      EFI_DEVICE_PATH_PROTOCOL *BootPath         = NULL;
-      CHAR16                   *BootDesc         = L"MsTemp";
-      VOID                     *OptionalData     = NULL;
-      UINT32                    OptionalDataSize = 0;
-      BOOLEAN                   FreeBootPath     = FALSE;
+      EFI_DEVICE_PATH_PROTOCOL *BootPath = NULL;
 
-      if (FileExistsOnHandle (Handles[Index], L"vmlinuz-linux")) {
+      if (FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") || FileExistsOnHandle (Handles[Index], L"Image")) {
+        CHAR16 *KernelFile = FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") ? L"vmlinuz-linux" : L"Image";
         STATIC CONST CHAR16 LinuxCmdLine[] =
-          L"console=tty0 root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait initrd=\\initramfs-linux.img earlycon acpi=force clk_ignore_unused pd_ignore_unused";
-        DEBUG ((DEBUG_WARN, "[BDS] Found \\vmlinuz-linux! Directly booting Arch Linux ARM kernel...\n"));
-        BootPath         = FileDevicePath (Handles[Index], L"\\vmlinuz-linux");
-        BootDesc         = L"Arch Linux ARM";
-        OptionalData     = (VOID *)LinuxCmdLine;
-        OptionalDataSize = (UINT32)StrSize (LinuxCmdLine);
-        FreeBootPath     = TRUE;
-      } else if (FileExistsOnHandle (Handles[Index], L"Image")) {
-        STATIC CONST CHAR16 LinuxCmdLine[] =
-          L"console=tty0 root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait initrd=\\initramfs-linux.img earlycon acpi=force clk_ignore_unused pd_ignore_unused";
-        DEBUG ((DEBUG_WARN, "[BDS] Found \\Image! Directly booting Arch Linux ARM kernel...\n"));
-        BootPath         = FileDevicePath (Handles[Index], L"\\Image");
-        BootDesc         = L"Arch Linux ARM";
-        OptionalData     = (VOID *)LinuxCmdLine;
-        OptionalDataSize = (UINT32)StrSize (LinuxCmdLine);
-        FreeBootPath     = TRUE;
-      } else {
-        BootPath = DevicePathFromHandle (Handles[Index]);
-      }
+          L"console=tty0 root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait initrd=\\initramfs-linux.img clk_ignore_unused pd_ignore_unused efi=debug ignore_loglevel";
+        VOID                      *KernelBuffer = NULL;
+        UINTN                      KernelSize   = 0;
+        EFI_HANDLE                 EntryImage   = NULL;
+        EFI_LOADED_IMAGE_PROTOCOL *ImageInfo    = NULL;
+        UINTN                      ExitDataSize = 0;
+        CHAR16                    *ExitData     = NULL;
 
-      if (BootPath == NULL) {
-        BootPath         = DevicePathFromHandle (Handles[Index]);
-        BootDesc         = L"MsTemp";
-        OptionalData     = NULL;
-        OptionalDataSize = 0;
-        FreeBootPath     = FALSE;
-      }
+        DEBUG ((DEBUG_WARN, "[BDS] Found \\%s! Starting safe chunked load...\n", KernelFile));
+        Status = LoadFileToBufferChunked (Handles[Index], KernelFile, &KernelBuffer, &KernelSize);
+        if (!EFI_ERROR (Status) && (KernelBuffer != NULL)) {
+          BootPath = FileDevicePath (Handles[Index], (KernelFile[0] == L'v') ? L"\\vmlinuz-linux" : L"\\Image");
 
-      EfiBootManagerInitializeLoadOption (
-        &BootOption,
-        LoadOptionNumberUnassigned,
-        LoadOptionTypeBoot,
-        LOAD_OPTION_ACTIVE,
-        BootDesc,
-        BootPath,
-        (UINT8 *)OptionalData,
-        OptionalDataSize
-        );
+          // Pre-load initramfs safely in 256KB chunks and provide via LoadFile2 (prevents UFSDxe DMA lockup)
+          if (FileExistsOnHandle (Handles[Index], L"initramfs-linux.img")) {
+            Status = LoadFileToBufferChunked (Handles[Index], L"initramfs-linux.img", &mBdsInitrdBuffer, &mBdsInitrdSize);
+            if (!EFI_ERROR (Status) && (mBdsInitrdBuffer != NULL)) {
+              Status = gBS->InstallMultipleProtocolInterfaces (
+                              &mBdsInitrdHandle,
+                              &gEfiLoadFile2ProtocolGuid,
+                              &mBdsInitrdLoadFile2,
+                              &gEfiDevicePathProtocolGuid,
+                              &mBdsRamdiskDevicePath,
+                              NULL
+                              );
+              DEBUG ((DEBUG_WARN, "[BDS] Registered LoadFile2 initrd provider (%u KB): %r\n", (UINT32)(mBdsInitrdSize / 1024), Status));
+            }
+          }
 
-      if (FreeBootPath && (BootPath != NULL)) {
-        FreePool (BootPath);
-      }
+          // Protect RPMB right before loading image
+          ProtectUfsRpmb ();
 
-      if ((ByFilter == FilterOnlyIPv4) || (ByFilter == FilterOnlyIPv6) || (ByFilter == FilterOnlyUSB)) {
-        DEBUG ((DEBUG_INFO, "Attempting alternate boot...\n"));
-        Status = SetAltBoot ();
-        if (EFI_ERROR (Status) != FALSE) {
-          DEBUG ((DEBUG_ERROR, "Alternate boot set failed %r...\n", Status));
+          DEBUG ((DEBUG_WARN, "[BDS] Calling LoadImage with %u KB buffer...\n", (UINT32)(KernelSize / 1024)));
+          Status = gBS->LoadImage (
+                          FALSE,
+                          gImageHandle,
+                          BootPath,
+                          KernelBuffer,
+                          KernelSize,
+                          &EntryImage
+                          );
+          DEBUG ((DEBUG_WARN, "[BDS] LoadImage result: %r, EntryImage: %p\n", Status, EntryImage));
+
+          FreePool (KernelBuffer);
+
+          if (!EFI_ERROR (Status) && (EntryImage != NULL)) {
+            Status = gBS->HandleProtocol (EntryImage, &gEfiLoadedImageProtocolGuid, (VOID **)&ImageInfo);
+            if (!EFI_ERROR (Status) && (ImageInfo != NULL)) {
+              ImageInfo->LoadOptions     = (VOID *)LinuxCmdLine;
+              ImageInfo->LoadOptionsSize = (UINT32)StrSize (LinuxCmdLine);
+              DEBUG ((DEBUG_WARN, "[BDS] Set LoadOptions (%u bytes)\n", ImageInfo->LoadOptionsSize));
+            }
+
+            // Final RPMB protection
+            ProtectUfsRpmb ();
+
+            DEBUG ((DEBUG_WARN, "[BDS] Transferring control to Linux kernel in 1s...\n"));
+            gBS->Stall (1000000);
+
+            Status = gBS->StartImage (EntryImage, &ExitDataSize, &ExitData);
+            DEBUG ((DEBUG_WARN, "[BDS] Linux kernel StartImage returned! Status: %r\n", Status));
+          }
+
+          if (mBdsInitrdHandle != NULL) {
+            gBS->UninstallMultipleProtocolInterfaces (
+                   mBdsInitrdHandle,
+                   &gEfiLoadFile2ProtocolGuid,
+                   &mBdsInitrdLoadFile2,
+                   &gEfiDevicePathProtocolGuid,
+                   &mBdsRamdiskDevicePath,
+                   NULL
+                   );
+            mBdsInitrdHandle = NULL;
+          }
+          if (mBdsInitrdBuffer != NULL) {
+            FreePool (mBdsInitrdBuffer);
+            mBdsInitrdBuffer = NULL;
+            mBdsInitrdSize   = 0;
+          }
+
+          if (BootPath != NULL) {
+            FreePool (BootPath);
+          }
+
+          if (Status == EFI_SUCCESS) {
+            break;
+          }
+        } else {
+          DEBUG ((DEBUG_ERROR, "[BDS] LoadFileToBufferChunked failed: %r\n", Status));
         }
-      }
+      } else {
+        // Fallback for non-kernel boot options (e.g. standard UEFI apps)
+        BootPath = DevicePathFromHandle (Handles[Index]);
 
-      // Final protection of RPMB right before starting OS loader
-      ProtectUfsRpmb ();
+        EfiBootManagerInitializeLoadOption (
+          &BootOption,
+          LoadOptionNumberUnassigned,
+          LoadOptionTypeBoot,
+          LOAD_OPTION_ACTIVE,
+          L"MsTemp",
+          BootPath,
+          NULL,
+          0
+          );
 
-      EfiBootManagerBoot (&BootOption);
-      Status = BootOption.Status;
+        if ((ByFilter == FilterOnlyIPv4) || (ByFilter == FilterOnlyIPv6) || (ByFilter == FilterOnlyUSB)) {
+          DEBUG ((DEBUG_INFO, "Attempting alternate boot...\n"));
+          Status = SetAltBoot ();
+          if (EFI_ERROR (Status) != FALSE) {
+            DEBUG ((DEBUG_ERROR, "Alternate boot set failed %r...\n", Status));
+          }
+        }
 
-      DEBUG ((DEBUG_WARN, "[BDS] Boot attempt result: %r\n", Status));
+        ProtectUfsRpmb ();
 
-      EfiBootManagerFreeLoadOption (&BootOption);
-      // if EFI_SUCCESS, device was booted, and the return is back to setup
-      if (Status == EFI_SUCCESS) {
-        break;
+        EfiBootManagerBoot (&BootOption);
+        Status = BootOption.Status;
+
+        DEBUG ((DEBUG_WARN, "[BDS] Boot attempt result: %r\n", Status));
+
+        EfiBootManagerFreeLoadOption (&BootOption);
+        if (Status == EFI_SUCCESS) {
+          break;
+        }
       }
     } else {
       DEBUG ((DEBUG_WARN, "Device %s was blocked from booting\n", TmpStr));

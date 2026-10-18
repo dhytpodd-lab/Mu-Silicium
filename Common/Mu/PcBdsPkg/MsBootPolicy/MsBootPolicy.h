@@ -16,11 +16,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/ConnectConInEvent.h>
 #include <Guid/GlobalVariable.h>
 #include <Guid/StatusCodeDataTypeVariable.h>
+#include <Guid/FileInfo.h>
+#include <Guid/LinuxEfiInitrdMedia.h>
 
 #include <Protocol/Bds.h>
 #include <Protocol/DevicePath.h>
 #include <Protocol/LoadedImage.h>
 #include <Protocol/LoadFile.h>
+#include <Protocol/LoadFile2.h>
 #include <Protocol/SimpleFileSystem.h>
 
 #include <Library/BaseLib.h>
