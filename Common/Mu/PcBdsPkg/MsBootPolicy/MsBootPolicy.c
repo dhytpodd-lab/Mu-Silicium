@@ -137,6 +137,72 @@ EnsureUsbPower (
 }
 
 STATIC
+BOOLEAN
+IsSafeBlockIoDevicePath (
+  IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
+  )
+{
+  while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
+    if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == MSG_USB_DP))
+    {
+      return TRUE;
+    }
+
+    if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == MSG_UFS_DP))
+    {
+      UFS_DEVICE_PATH *UfsDp = (UFS_DEVICE_PATH *)DevicePath;
+      if (UfsDp->Lun == 0) {
+        return TRUE;
+      }
+      return FALSE;
+    }
+
+    if (DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) {
+      return TRUE;
+    }
+
+    DevicePath = NextDevicePathNode (DevicePath);
+  }
+  return FALSE;
+}
+
+STATIC
+VOID
+ConnectStorageControllers (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       HandleCount;
+  EFI_HANDLE  *Handles;
+  UINTN       Index;
+  UINTN       Pass;
+
+  DEBUG ((DEBUG_INFO, "%a: Connecting internal storage controllers...\n", __FUNCTION__));
+
+  for (Pass = 0; Pass < 2; Pass++) {
+    Status = gBS->LocateHandleBuffer (
+                    ByProtocol,
+                    &gEfiBlockIoProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+                    );
+    if (!EFI_ERROR (Status) && (Handles != NULL)) {
+      for (Index = 0; Index < HandleCount; Index++) {
+        EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
+        if ((DevicePath != NULL) && IsSafeBlockIoDevicePath (DevicePath)) {
+          gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+        }
+      }
+      FreePool (Handles);
+    }
+  }
+}
+
+STATIC
 VOID
 ConnectUsbControllers (
   VOID
@@ -214,7 +280,7 @@ ConnectUsbControllers (
     if (!EFI_ERROR (Status) && (Handles != NULL)) {
       for (Index = 0; Index < HandleCount; Index++) {
         EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
-        if ((DevicePath != NULL) && IsDevicePathUSB (DevicePath)) {
+        if ((DevicePath != NULL) && IsSafeBlockIoDevicePath (DevicePath)) {
           gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
         }
       }
@@ -758,9 +824,6 @@ MsBootPolicyEntry (
       break;
   }
 
-  // Connect USB controllers without touching internal UFS RPMB partition
-  ConnectUsbControllers ();
-
   CleanLoadOptions (LoadOptionTypeBoot);    // Insure there are no dangling BOOT#### options.
 
   Status = EFI_SUCCESS;
@@ -795,6 +858,8 @@ MsBootPolicyEntry (
         if (EFI_ERROR (GraphicStatus) != FALSE) {
           DEBUG ((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
         }
+
+        ConnectStorageControllers ();
 
         Status = SelectAndBootDevice (&gEfiSimpleFileSystemProtocolGuid, FilterNoUSB);
         break;

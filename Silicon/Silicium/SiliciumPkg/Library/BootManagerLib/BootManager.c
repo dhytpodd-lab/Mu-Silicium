@@ -74,7 +74,7 @@ STATIC CONST CHAR8 *ComboMessage = "[Volume Up] Boot Manager";
 
 STATIC
 BOOLEAN
-IsUsbDevicePath (
+IsSafeBlockIoDevicePath (
   IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
   )
 {
@@ -84,6 +84,21 @@ IsUsbDevicePath (
     {
       return TRUE;
     }
+
+    if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == MSG_UFS_DP))
+    {
+      UFS_DEVICE_PATH *UfsDp = (UFS_DEVICE_PATH *)DevicePath;
+      if (UfsDp->Lun == 0) {
+        return TRUE;
+      }
+      return FALSE;
+    }
+
+    if (DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) {
+      return TRUE;
+    }
+
     DevicePath = NextDevicePathNode (DevicePath);
   }
   return FALSE;
@@ -200,7 +215,7 @@ PlatformConnectUsb (
     if (!EFI_ERROR (Status) && (Handles != NULL)) {
       for (Index = 0; Index < HandleCount; Index++) {
         EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
-        if ((DevicePath != NULL) && IsUsbDevicePath (DevicePath)) {
+        if ((DevicePath != NULL) && IsSafeBlockIoDevicePath (DevicePath)) {
           gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
         }
       }
