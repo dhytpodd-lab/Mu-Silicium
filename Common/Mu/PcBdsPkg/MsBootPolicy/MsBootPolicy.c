@@ -287,16 +287,26 @@ LoadFileToBufferChunked (
     return EFI_NOT_FOUND;
   }
 
-  DEBUG ((DEBUG_WARN, "[BDS] Loading %s (%u MB) in 256KB chunks...\n", FileName, (UINT32)(FileSize / (1024 * 1024))));
+  DEBUG ((DEBUG_WARN, "[BDS] Loading %s (%u MB) in 64KB chunks...\n", FileName, (UINT32)(FileSize / (1024 * 1024))));
 
-  Buffer = AllocatePool (FileSize);
-  if (Buffer == NULL) {
-    DEBUG ((DEBUG_ERROR, "[BDS] Failed to allocate %u bytes for %s!\n", (UINT32)FileSize, FileName));
+  EFI_PHYSICAL_ADDRESS PhysicalBuffer = 0;
+  Status = gBS->AllocatePages (
+                  AllocateAnyPages,
+                  EfiBootServicesData,
+                  EFI_SIZE_TO_PAGES (FileSize),
+                  &PhysicalBuffer
+                  );
+  if (EFI_ERROR (Status) || (PhysicalBuffer == 0)) {
+    DEBUG ((DEBUG_ERROR, "[BDS] Failed to allocate %u pages for %s: %r\n", (UINT32)EFI_SIZE_TO_PAGES (FileSize), FileName, Status));
     File->Close (File);
     Root->Close (Root);
-    return EFI_OUT_OF_RESOURCES;
+    return (EFI_ERROR (Status) ? Status : EFI_OUT_OF_RESOURCES);
   }
 
+  Buffer = (UINT8 *)(UINTN)PhysicalBuffer;
+  DEBUG ((DEBUG_WARN, "[BDS] Allocated 4KB-aligned buffer at 0x%lx. Starting read...\n", (UINT64)PhysicalBuffer));
+
+  CONST UINTN ChunkSize = 64 * 1024;
   BytesRead = 0;
   while (BytesRead < FileSize) {
     UINTN ToRead = ChunkSize;
@@ -306,16 +316,20 @@ LoadFileToBufferChunked (
 
     Status = File->Read (File, &ToRead, Buffer + BytesRead);
     if (EFI_ERROR (Status) || (ToRead == 0)) {
-      DEBUG ((DEBUG_ERROR, "[BDS] Error reading %s at offset %u: %r\n", FileName, (UINT32)BytesRead, Status));
-      FreePool (Buffer);
+      DEBUG ((DEBUG_ERROR, "[BDS] Error reading %s at offset %u: %r (ToRead=%u)\n", FileName, (UINT32)BytesRead, Status, (UINT32)ToRead));
+      gBS->FreePages (PhysicalBuffer, EFI_SIZE_TO_PAGES (FileSize));
       File->Close (File);
       Root->Close (Root);
       return (EFI_ERROR (Status) ? Status : EFI_DEVICE_ERROR);
     }
 
+    if (BytesRead == 0) {
+      DEBUG ((DEBUG_WARN, "[BDS] First 64KB chunk read successfully!\n"));
+    }
+
     BytesRead += ToRead;
 
-    if (((BytesRead % (8 * 1024 * 1024)) < ChunkSize) || (BytesRead == FileSize)) {
+    if (((BytesRead % (4 * 1024 * 1024)) == 0) || (BytesRead == FileSize)) {
       DEBUG ((DEBUG_WARN, "[BDS] Loaded %u / %u MB (%u%%)...\n",
         (UINT32)(BytesRead / (1024 * 1024)),
         (UINT32)(FileSize / (1024 * 1024)),
@@ -948,7 +962,7 @@ SelectAndBootDevice (
                           );
           DEBUG ((DEBUG_WARN, "[BDS] LoadImage result: %r, EntryImage: %p\n", Status, EntryImage));
 
-          FreePool (KernelBuffer);
+          gBS->FreePages ((EFI_PHYSICAL_ADDRESS)(UINTN)KernelBuffer, EFI_SIZE_TO_PAGES (KernelSize));
 
           if (!EFI_ERROR (Status) && (EntryImage != NULL)) {
             Status = gBS->HandleProtocol (EntryImage, &gEfiLoadedImageProtocolGuid, (VOID **)&ImageInfo);
@@ -980,7 +994,7 @@ SelectAndBootDevice (
             mBdsInitrdHandle = NULL;
           }
           if (mBdsInitrdBuffer != NULL) {
-            FreePool (mBdsInitrdBuffer);
+            gBS->FreePages ((EFI_PHYSICAL_ADDRESS)(UINTN)mBdsInitrdBuffer, EFI_SIZE_TO_PAGES (mBdsInitrdSize));
             mBdsInitrdBuffer = NULL;
             mBdsInitrdSize   = 0;
           }
