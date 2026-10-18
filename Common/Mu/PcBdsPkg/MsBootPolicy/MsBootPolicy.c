@@ -246,9 +246,10 @@ LoadFileToBufferChunked (
   EFI_FILE_INFO                   *FileInfo = NULL;
   UINTN                            FileInfoSize = 0;
   UINT8                           *Buffer = NULL;
+  EFI_PHYSICAL_ADDRESS             PhysicalBuffer = 0;
   UINTN                            FileSize = 0;
   UINTN                            BytesRead = 0;
-  CONST UINTN                      ChunkSize = 256 * 1024;
+  CONST UINTN                      ChunkSize = 64 * 1024;
 
   *BufferOut = NULL;
   *SizeOut   = 0;
@@ -289,7 +290,6 @@ LoadFileToBufferChunked (
 
   DEBUG ((DEBUG_WARN, "[BDS] Loading %s (%u MB) in 64KB chunks...\n", FileName, (UINT32)(FileSize / (1024 * 1024))));
 
-  EFI_PHYSICAL_ADDRESS PhysicalBuffer = 0;
   Status = gBS->AllocatePages (
                   AllocateAnyPages,
                   EfiBootServicesData,
@@ -306,7 +306,6 @@ LoadFileToBufferChunked (
   Buffer = (UINT8 *)(UINTN)PhysicalBuffer;
   DEBUG ((DEBUG_WARN, "[BDS] Allocated 4KB-aligned buffer at 0x%lx. Starting read...\n", (UINT64)PhysicalBuffer));
 
-  CONST UINTN ChunkSize = 64 * 1024;
   BytesRead = 0;
   while (BytesRead < FileSize) {
     UINTN ToRead = ChunkSize;
