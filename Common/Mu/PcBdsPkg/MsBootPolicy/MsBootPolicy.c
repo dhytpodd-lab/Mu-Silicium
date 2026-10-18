@@ -249,6 +249,73 @@ PatchKsymtabSymbolReturnZero (
 }
 
 STATIC
+BOOLEAN
+PatchPowerUpSequence (
+  IN UINT8 *Buf,
+  IN UINTN  KernelSize
+  )
+{
+  CONST CHAR8 TargetStr[] = "phy init failed";
+  UINTN       StrLen = sizeof (TargetStr) - 1;
+  UINTN       StrOffset = 0;
+  BOOLEAN     FoundStr = FALSE;
+  UINTN       i;
+
+  for (i = 0; i < KernelSize - StrLen; i++) {
+    if (CompareMem (&Buf[i], TargetStr, StrLen) == 0) {
+      StrOffset = i;
+      FoundStr = TRUE;
+      DEBUG ((DEBUG_WARN, "[BDS] Found '%a' at offset 0x%lx\n", TargetStr, (UINT64)StrOffset));
+      break;
+    }
+  }
+
+  if (!FoundStr) {
+    DEBUG ((DEBUG_WARN, "[BDS] String '%a' not found in kernel\n", TargetStr));
+    return FALSE;
+  }
+
+  for (i = 0; i < KernelSize - 4; i += 4) {
+    UINT32 Insn = *(UINT32 *)&Buf[i];
+    if ((Insn & 0x9f000000) == 0x90000000) {
+      INT64 ImmLo = (Insn >> 29) & 0x3;
+      INT64 ImmHi = (Insn >> 5) & 0x7ffff;
+      INT64 Imm = (ImmHi << 2) | ImmLo;
+      if (Imm & 0x100000) {
+        Imm |= ~0x1fffffLL;
+      }
+      INT64 TargetPage = ((INT64)i & ~0xfffLL) + (Imm << 12);
+      if (TargetPage == ((INT64)StrOffset & ~0xfffLL)) {
+        if (i + 4 < KernelSize) {
+          UINT32 NextInsn = *(UINT32 *)&Buf[i + 4];
+          if ((NextInsn & 0xffc00000) == 0x91000000) {
+            UINT32 AddOffset = (NextInsn >> 10) & 0xfff;
+            if (AddOffset == ((UINT32)StrOffset & 0xfff)) {
+              DEBUG ((DEBUG_WARN, "[BDS] Found ADRP/ADD to 'phy init failed' at offset 0x%lx\n", (UINT64)i));
+              UINTN StartSearch = (i > 1200) ? (i - 1200) : 0;
+              UINTN j;
+              for (j = i; j >= StartSearch; j -= 4) {
+                UINT32 BackInsn = *(UINT32 *)&Buf[j];
+                if ((BackInsn & 0xffc07fff) == 0xa9807bfd) {
+                  DEBUG ((DEBUG_WARN, "[BDS] Found ufs_qcom_power_up_sequence entry at 0x%lx (insn: 0x%08x)\n", (UINT64)j, BackInsn));
+                  *(UINT32 *)&Buf[j]     = 0xd2800000;
+                  *(UINT32 *)&Buf[j + 4] = 0xd65f03c0;
+                  DEBUG ((DEBUG_WARN, "[BDS] Successfully stubbed ufs_qcom_power_up_sequence to return 0!\n"));
+                  return TRUE;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  DEBUG ((DEBUG_WARN, "[BDS] Warning: ufs_qcom_power_up_sequence ADRP reference not found\n"));
+  return FALSE;
+}
+
+STATIC
 VOID
 PatchKernelForAcpiUfs (
   IN VOID   *KernelBuffer,
@@ -264,6 +331,7 @@ PatchKernelForAcpiUfs (
 
   PatchKsymtabSymbolReturnZero (Buf, KernelSize, "devm_reset_controller_register");
   PatchKsymtabSymbolReturnZero (Buf, KernelSize, "devm_of_icc_get");
+  PatchPowerUpSequence (Buf, KernelSize);
 
   // Fallback: search for opcode signature around __dev_fwnode
   // Code signature: 0x00, 0x00, 0x80, 0xf2, 0xc0, 0x03, 0x5f, 0xd6, 0x00, 0x54, 0x41, 0xf9
