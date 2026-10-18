@@ -138,15 +138,15 @@ EnsureUsbPower (
 
 STATIC
 BOOLEAN
-IsSafeBlockIoDevicePath (
+IsUfsLun0DiskDevicePath (
   IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
   )
 {
+  BOOLEAN IsLun0 = FALSE;
+
   while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
-    if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
-        (DevicePathSubType (DevicePath) == MSG_USB_DP))
-    {
-      return TRUE;
+    if (DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) {
+      return FALSE;
     }
 
     if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
@@ -154,18 +154,14 @@ IsSafeBlockIoDevicePath (
     {
       UFS_DEVICE_PATH *UfsDp = (UFS_DEVICE_PATH *)DevicePath;
       if (UfsDp->Lun == 0) {
-        return TRUE;
+        IsLun0 = TRUE;
       }
-      return FALSE;
-    }
-
-    if (DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) {
-      return TRUE;
     }
 
     DevicePath = NextDevicePathNode (DevicePath);
   }
-  return FALSE;
+
+  return IsLun0;
 }
 
 STATIC
@@ -178,27 +174,25 @@ ConnectStorageControllers (
   UINTN       HandleCount;
   EFI_HANDLE  *Handles;
   UINTN       Index;
-  UINTN       Pass;
 
-  DEBUG ((DEBUG_INFO, "%a: Connecting internal storage controllers...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: Connecting internal UFS LUN 0 storage...\n", __FUNCTION__));
 
-  for (Pass = 0; Pass < 2; Pass++) {
-    Status = gBS->LocateHandleBuffer (
-                    ByProtocol,
-                    &gEfiBlockIoProtocolGuid,
-                    NULL,
-                    &HandleCount,
-                    &Handles
-                    );
-    if (!EFI_ERROR (Status) && (Handles != NULL)) {
-      for (Index = 0; Index < HandleCount; Index++) {
-        EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
-        if ((DevicePath != NULL) && IsSafeBlockIoDevicePath (DevicePath)) {
-          gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
-        }
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiBlockIoProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
+      if ((DevicePath != NULL) && IsUfsLun0DiskDevicePath (DevicePath)) {
+        DEBUG ((DEBUG_INFO, "%a: Connecting UFS LUN 0 (sda)...\n", __FUNCTION__));
+        gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
       }
-      FreePool (Handles);
     }
+    FreePool (Handles);
   }
 }
 
@@ -280,7 +274,7 @@ ConnectUsbControllers (
     if (!EFI_ERROR (Status) && (Handles != NULL)) {
       for (Index = 0; Index < HandleCount; Index++) {
         EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
-        if ((DevicePath != NULL) && IsSafeBlockIoDevicePath (DevicePath)) {
+        if ((DevicePath != NULL) && IsDevicePathUSB (DevicePath)) {
           gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
         }
       }

@@ -74,7 +74,7 @@ STATIC CONST CHAR8 *ComboMessage = "[Volume Up] Boot Manager";
 
 STATIC
 BOOLEAN
-IsSafeBlockIoDevicePath (
+IsUsbDevicePath (
   IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
   )
 {
@@ -84,24 +84,37 @@ IsSafeBlockIoDevicePath (
     {
       return TRUE;
     }
+    DevicePath = NextDevicePathNode (DevicePath);
+  }
+  return FALSE;
+}
+
+STATIC
+BOOLEAN
+IsUfsLun0DiskDevicePath (
+  IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
+  )
+{
+  BOOLEAN IsLun0 = FALSE;
+
+  while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
+    if (DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) {
+      return FALSE;
+    }
 
     if ((DevicePathType (DevicePath) == MESSAGING_DEVICE_PATH) &&
         (DevicePathSubType (DevicePath) == MSG_UFS_DP))
     {
       UFS_DEVICE_PATH *UfsDp = (UFS_DEVICE_PATH *)DevicePath;
       if (UfsDp->Lun == 0) {
-        return TRUE;
+        IsLun0 = TRUE;
       }
-      return FALSE;
-    }
-
-    if (DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) {
-      return TRUE;
     }
 
     DevicePath = NextDevicePathNode (DevicePath);
   }
-  return FALSE;
+
+  return IsLun0;
 }
 
 typedef struct _EFI_USB_PWR_CTRL_PROTOCOL EFI_USB_PWR_CTRL_PROTOCOL;
@@ -204,7 +217,7 @@ PlatformConnectUsb (
     }
 
     // Connect USB BlockIo handles (attaches PartitionDxe, DiskIoDxe, FatDxe)
-    // Exclude internal UFS handles to prevent hanging on RPMB LU4!
+    // Connect USB BlockIo handles (attaches PartitionDxe, DiskIoDxe, FatDxe for USB only)
     Status = gBS->LocateHandleBuffer (
                     ByProtocol,
                     &gEfiBlockIoProtocolGuid,
@@ -215,7 +228,7 @@ PlatformConnectUsb (
     if (!EFI_ERROR (Status) && (Handles != NULL)) {
       for (Index = 0; Index < HandleCount; Index++) {
         EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
-        if ((DevicePath != NULL) && IsSafeBlockIoDevicePath (DevicePath)) {
+        if ((DevicePath != NULL) && IsUsbDevicePath (DevicePath)) {
           gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
         }
       }
@@ -240,6 +253,37 @@ PlatformConnectUsb (
 }
 
 VOID
+PlatformConnectStorage (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       HandleCount;
+  EFI_HANDLE  *Handles;
+  UINTN       Index;
+
+  DEBUG ((EFI_D_WARN, "[BDS] Connecting internal UFS LUN 0 storage...\n"));
+
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiBlockIoProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status) && (Handles != NULL)) {
+    for (Index = 0; Index < HandleCount; Index++) {
+      EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
+      if ((DevicePath != NULL) && IsUfsLun0DiskDevicePath (DevicePath)) {
+        DEBUG ((EFI_D_WARN, "[BDS] Connecting UFS LUN 0 (sda)...\n"));
+        gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+      }
+    }
+    FreePool (Handles);
+  }
+}
+
+VOID
 EFIAPI
 PlatformBootManagerBeforeConsole ()
 {
@@ -256,6 +300,9 @@ PlatformBootManagerBeforeConsole ()
 
   // Connect USB Controllers for OTG Keyboard & Mass Storage
   PlatformConnectUsb ();
+
+  // Connect internal UFS LUN 0 storage (attaches PartitionDxe & FatDxe to sda & sda19 ESP)
+  PlatformConnectStorage ();
 
   // Register Console Variables
   EfiBootManagerUpdateConsoleVariable (ConIn,  (EFI_DEVICE_PATH_PROTOCOL *)&KeypadDevicePath,  NULL);
