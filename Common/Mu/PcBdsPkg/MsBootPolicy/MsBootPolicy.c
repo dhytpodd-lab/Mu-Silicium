@@ -197,130 +197,7 @@ ProtectUfsRpmb (
   }
 }
 
-STATIC
-BOOLEAN
-PatchKsymtabSymbolReturnZero (
-  IN UINT8       *Buf,
-  IN UINTN        KernelSize,
-  IN CONST CHAR8 *TargetSym
-  )
-{
-  UINTN   SymLen = AsciiStrLen (TargetSym) + 1; // includes null terminator
-  UINTN   StrOffset = 0;
-  BOOLEAN FoundStr = FALSE;
-  UINTN   i;
 
-  for (i = 0; i < KernelSize - SymLen; i++) {
-    if (CompareMem (&Buf[i], TargetSym, SymLen) == 0) {
-      StrOffset = i;
-      FoundStr = TRUE;
-      DEBUG ((DEBUG_WARN, "[BDS] Found '%a' string at offset 0x%lx\n", TargetSym, (UINT64)StrOffset));
-      break;
-    }
-  }
-
-  if (!FoundStr) {
-    DEBUG ((DEBUG_WARN, "[BDS] Symbol string '%a' not found in kernel\n", TargetSym));
-    return FALSE;
-  }
-
-  for (i = 0; i < KernelSize - 8; i += 4) {
-    INT32 NameOffset = *(INT32 *)&Buf[i];
-    if ((INT64)i + (INT64)NameOffset == (INT64)StrOffset) {
-      if (i >= 4) {
-        UINTN ValPos = i - 4;
-        INT32 ValOffset = *(INT32 *)&Buf[ValPos];
-        INT64 FuncAddr = (INT64)ValPos + (INT64)ValOffset;
-        if ((FuncAddr > 0) && ((UINTN)FuncAddr < KernelSize - 8)) {
-          DEBUG ((DEBUG_WARN, "[BDS] Found ksymtab for '%a' at 0x%lx, function at 0x%lx\n",
-                  TargetSym, (UINT64)ValPos, (UINT64)FuncAddr));
-          // Patch function entry with: mov x0, #0 (0xd2800000); ret (0xd65f03c0)
-          *(UINT32 *)&Buf[FuncAddr]     = 0xd2800000;
-          *(UINT32 *)&Buf[FuncAddr + 4] = 0xd65f03c0;
-          DEBUG ((DEBUG_WARN, "[BDS] Successfully patched '%a' to return 0!\n", TargetSym));
-          return TRUE;
-        }
-      }
-    }
-  }
-
-  DEBUG ((DEBUG_WARN, "[BDS] Warning: ksymtab entry for '%a' not found\n", TargetSym));
-  return FALSE;
-}
-
-STATIC
-BOOLEAN
-PatchPowerUpSequence (
-  IN UINT8 *Buf,
-  IN UINTN  KernelSize
-  )
-{
-  UINTN i, k;
-
-  // Search for: ldr Wt, [Xn, #0x344]
-  // In ARM64: (insn & 0xfffffc00) == 0xb9434400
-  for (i = 0; i < KernelSize - 32; i += 4) {
-    UINT32 Insn = *(UINT32 *)&Buf[i];
-    if ((Insn & 0xfffffc00) == 0xb9434400) {
-      UINT32 Rt = Insn & 0x1f;
-      // Check the next 3 instructions for branch or test on Wt
-      for (k = 4; k <= 12; k += 4) {
-        UINT32 NextInsn = *(UINT32 *)&Buf[i + k];
-        if (((NextInsn & 0x7f00001f) == (0x34000000 | Rt)) || // cbz Wt
-            ((NextInsn & 0x7f00001f) == (0x35000000 | Rt)) || // cbnz Wt
-            ((NextInsn & 0xffe0001f) == (0x7100001f | (Rt << 5)))) // cmp Wt, #0
-        {
-          DEBUG ((DEBUG_WARN, "[BDS] Found phy->power_count check at 0x%lx (insn 0x%08x, branch 0x%08x at +%u)\n",
-                  (UINT64)i, Insn, NextInsn, (UINT32)k));
-          // Replace ldr Wt, [Xn, #0x344] with mov Wt, #0 (0x52800000 | Rt)
-          *(UINT32 *)&Buf[i] = 0x52800000 | Rt;
-          DEBUG ((DEBUG_WARN, "[BDS] Successfully patched phy->power_count with mov w%u, #0!\n", Rt));
-          return TRUE;
-        }
-      }
-    }
-  }
-
-  DEBUG ((DEBUG_WARN, "[BDS] Warning: phy->power_count check not found\n"));
-  return FALSE;
-}
-
-STATIC
-VOID
-PatchKernelForAcpiUfs (
-  IN VOID   *KernelBuffer,
-  IN UINTN   KernelSize
-  )
-{
-  UINT8 *Buf = (UINT8 *)KernelBuffer;
-  UINTN  i;
-
-  if ((KernelBuffer == NULL) || (KernelSize < 1024 * 1024)) {
-    return;
-  }
-
-  PatchKsymtabSymbolReturnZero (Buf, KernelSize, "devm_reset_controller_register");
-  PatchKsymtabSymbolReturnZero (Buf, KernelSize, "devm_of_icc_get");
-  PatchPowerUpSequence (Buf, KernelSize);
-
-  // Fallback: search for opcode signature around __dev_fwnode
-  // Code signature: 0x00, 0x00, 0x80, 0xf2, 0xc0, 0x03, 0x5f, 0xd6, 0x00, 0x54, 0x41, 0xf9
-  // (movk..., ret, ldr x0, [x0, #0x2a8])
-  {
-    STATIC CONST UINT8 Sig[] = { 0x00, 0x00, 0x80, 0xf2, 0xc0, 0x03, 0x5f, 0xd6, 0x00, 0x54, 0x41, 0xf9 };
-    for (i = 0; i < KernelSize - sizeof (Sig); i += 4) {
-      if (CompareMem (&Buf[i], Sig, sizeof (Sig)) == 0) {
-        UINTN LdrPos = i + 8; // Offset of 00 54 41 f9
-        DEBUG ((DEBUG_WARN, "[BDS] Found __dev_fwnode crash opcode at 0x%lx, patching with NULL check!\n", (UINT64)LdrPos));
-        // Replace ldr x0, [x0, #0x2a8] (0xf9415400) with cbz x0, +0x14 (0x340000a0)
-        // If x0 is NULL, jumps directly to ret, returning NULL safely
-        *(UINT32 *)&Buf[LdrPos] = 0x340000a0;
-        DEBUG ((DEBUG_WARN, "[BDS] Successfully patched __dev_fwnode with cbz x0, +0x14!\n"));
-        break;
-      }
-    }
-  }
-}
 
 STATIC
 BOOLEAN
@@ -1085,9 +962,6 @@ SelectAndBootDevice (
             }
           }
 
-          // Patch kernel in memory to fix ACPI UFS reset controller NULL pointer crash
-          PatchKernelForAcpiUfs (KernelBuffer, KernelSize);
-
           // Protect RPMB right before loading image
           ProtectUfsRpmb ();
 
@@ -1107,7 +981,6 @@ SelectAndBootDevice (
           if (!EFI_ERROR (Status) && (EntryImage != NULL)) {
             Status = gBS->HandleProtocol (EntryImage, &gEfiLoadedImageProtocolGuid, (VOID **)&ImageInfo);
             if (!EFI_ERROR (Status) && (ImageInfo != NULL)) {
-              PatchKernelForAcpiUfs (ImageInfo->ImageBase, ImageInfo->ImageSize);
               ImageInfo->LoadOptions     = (VOID *)LinuxCmdLine;
               ImageInfo->LoadOptionsSize = (UINT32)StrSize (LinuxCmdLine);
               DEBUG ((DEBUG_WARN, "[BDS] Set LoadOptions (%u bytes)\n", ImageInfo->LoadOptionsSize));
