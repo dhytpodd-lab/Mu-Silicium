@@ -933,7 +933,7 @@ SelectAndBootDevice (
       if (FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") || FileExistsOnHandle (Handles[Index], L"Image")) {
         CHAR16 *KernelFile = FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") ? L"vmlinuz-linux" : L"Image";
         STATIC CONST CHAR16 LinuxCmdLine[] =
-          L"console=tty0 earlycon=efifb,ram keep_bootcon root=PARTUUID=51DBC6C9-665E-49A8-8C17-3B4815CD4B21 rw rootwait acpi=force clk_ignore_unused pd_ignore_unused ignore_loglevel systemd.journald.forward_to_console=1 systemd.setenv=SYSTEMD_SULOGIN_FORCE=1";
+          L"console=tty0 earlycon=efifb,ram keep_bootcon root=/dev/sda20 rw rootwait acpi=force clk_ignore_unused pd_ignore_unused ignore_loglevel systemd.journald.forward_to_console=1 systemd.setenv=SYSTEMD_SULOGIN_FORCE=1";
         VOID                      *KernelBuffer = NULL;
         UINTN                      KernelSize   = 0;
         EFI_HANDLE                 EntryImage   = NULL;
