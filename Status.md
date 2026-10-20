@@ -4918,7 +4918,7 @@
 
 ## Xiaomi Redmi Note 13 4G
 
-<img align="right" src="Resources/Pictures/Xiaomi-Redmi-Note-12.png" width="500" alt="Preview">
+<img align="right" src="Resources/Pictures/Xiaomi-Redmi-Note-13.png" width="500" alt="Preview">
 
 **State:** Active <br>
 **Codename:** sapphiren
