@@ -4929,16 +4929,16 @@
 
 | Feature            | Description       | State |
 |:-------------------|:------------------|:-----:|
-| Display            | SimpleFB          | ⏳    |
-| Internal Storage   | UFS               | ⏳    |
+| Display            | SimpleFB          | ✅    |
+| Internal Storage   | UFS               | ✅    |
 | Side Buttons       |                   | ⏳    |
 | USB Host Mode      |                   | ⏳    |
 | USB Device Mode    |                   | ❌    |
 | USB Power Delivery |                   | ❌    |
 | Mass Storage       | Needs Device Mode | ❌    |
 | SD Card            |                   | ⏳    |
-| Windows Boot       |                   | ⏳    |
-| Linux Boot         |                   | ⏳    |
+| Windows Boot       | WinPE stuck anim  | ⏳    |
+| Linux Boot         |                   | ✅    |
 
 </details>
 
