@@ -138,7 +138,6 @@ EnsureUsbPower (
 
 STATIC CONST EFI_GUID mUfsLU0Guid = { 0x860845C1, 0xBE09, 0x4355, { 0x8B, 0xC1, 0x30, 0xD6, 0x4F, 0xF8, 0xE6, 0x3A } };
 STATIC CONST EFI_GUID mUfsRPMBGuid = { 0x5397474E, 0xF75D, 0x44B3, { 0x8E, 0x57, 0xD9, 0x32, 0x4F, 0xCF, 0x6F, 0xE1 } };
-STATIC CONST EFI_GUID mEspPartGuid = { 0x6FE7F2F4, 0xE67E, 0x4630, { 0xA1, 0x2C, 0x74, 0x05, 0xB1, 0x6F, 0x5C, 0xE9 } };
 
 STATIC
 BOOLEAN
@@ -464,12 +463,12 @@ IsUfsLun0DiskDevicePath (
 
 STATIC
 BOOLEAN
-IsUfsEspDevicePath (
+IsUfsPartitionDevicePath (
   IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
   )
 {
   BOOLEAN IsLu0 = FALSE;
-  BOOLEAN IsEsp = FALSE;
+  BOOLEAN IsPartition = FALSE;
 
   while ((DevicePath != NULL) && !IsDevicePathEndType (DevicePath)) {
     if ((DevicePathType (DevicePath) == HARDWARE_DEVICE_PATH) &&
@@ -493,16 +492,13 @@ IsUfsEspDevicePath (
     if ((DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) &&
         (DevicePathSubType (DevicePath) == MEDIA_HARDDRIVE_DP))
     {
-      HARDDRIVE_DEVICE_PATH *Hd = (HARDDRIVE_DEVICE_PATH *)DevicePath;
-      if ((Hd->PartitionNumber == 19) || CompareGuid ((EFI_GUID *)Hd->Signature, &mEspPartGuid)) {
-        IsEsp = TRUE;
-      }
+      IsPartition = TRUE;
     }
 
     DevicePath = NextDevicePathNode (DevicePath);
   }
 
-  return (IsLu0 && IsEsp);
+  return (IsLu0 && IsPartition);
 }
 
 STATIC
@@ -546,7 +542,7 @@ ConnectStorageControllers (
   // Protect RPMB again in case child drivers re-registered
   ProtectUfsRpmb ();
 
-  // Pass 2: Connect sda19 ESP partition handle
+  // Pass 2: Connect all UFS partition handles so any formatted boot partition is mounted
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
                   &gEfiBlockIoProtocolGuid,
@@ -557,8 +553,8 @@ ConnectStorageControllers (
   if (!EFI_ERROR (Status) && (Handles != NULL)) {
     for (Index = 0; Index < HandleCount; Index++) {
       EFI_DEVICE_PATH_PROTOCOL *DevicePath = DevicePathFromHandle (Handles[Index]);
-      if ((DevicePath != NULL) && IsUfsEspDevicePath (DevicePath)) {
-        DEBUG ((DEBUG_WARN, "%a: Connecting UFS ESP partition (sda19)...\n", __FUNCTION__));
+      if ((DevicePath != NULL) && IsUfsPartitionDevicePath (DevicePath)) {
+        DEBUG ((DEBUG_WARN, "%a: Connecting UFS LUN 0 partition handle...\n", __FUNCTION__));
         gBS->ConnectController (Handles[Index], NULL, NULL, FALSE);
       }
     }
@@ -899,10 +895,9 @@ SelectAndBootDevice (
 
   SortHandles (Handles, HandleCount);
 
-  // Prioritize UFS ESP partition (sda19) to front of list
+  // Prioritize any handle that contains a bootable Linux kernel (vmlinuz-linux or Image)
   for (Index = 0; Index < HandleCount; Index++) {
-    EFI_DEVICE_PATH_PROTOCOL *Dp = DevicePathFromHandle (Handles[Index]);
-    if ((Dp != NULL) && IsUfsEspDevicePath (Dp)) {
+    if (FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") || FileExistsOnHandle (Handles[Index], L"Image")) {
       if (Index > 0) {
         EFI_HANDLE TempH = Handles[Index];
         Handles[Index] = Handles[0];
@@ -932,14 +927,77 @@ SelectAndBootDevice (
 
       if (FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") || FileExistsOnHandle (Handles[Index], L"Image")) {
         CHAR16 *KernelFile = FileExistsOnHandle (Handles[Index], L"vmlinuz-linux") ? L"vmlinuz-linux" : L"Image";
-        STATIC CONST CHAR16 LinuxCmdLine[] =
-          L"console=tty0 earlycon=efifb,ram keep_bootcon root=/dev/sda20 rw rootwait acpi=force clk_ignore_unused pd_ignore_unused ignore_loglevel systemd.journald.forward_to_console=1 systemd.setenv=SYSTEMD_SULOGIN_FORCE=1";
-        VOID                      *KernelBuffer = NULL;
-        UINTN                      KernelSize   = 0;
-        EFI_HANDLE                 EntryImage   = NULL;
-        EFI_LOADED_IMAGE_PROTOCOL *ImageInfo    = NULL;
-        UINTN                      ExitDataSize = 0;
-        CHAR16                    *ExitData     = NULL;
+        STATIC CONST CHAR16 DefaultLinuxCmdLine[] =
+          L"console=tty0 earlycon=efifb,ram keep_bootcon root=LABEL=ARCH_ROOT rw rootwait acpi=force clk_ignore_unused pd_ignore_unused ignore_loglevel systemd.journald.forward_to_console=1 systemd.setenv=SYSTEMD_SULOGIN_FORCE=1";
+        CHAR16                    *FinalCmdLine     = (CHAR16 *)DefaultLinuxCmdLine;
+        CHAR16                    *AllocatedCmdLine = NULL;
+        VOID                      *CmdLineBuf       = NULL;
+        UINTN                      CmdLineSize      = 0;
+        VOID                      *KernelBuffer     = NULL;
+        UINTN                      KernelSize       = 0;
+        EFI_HANDLE                 EntryImage       = NULL;
+        EFI_LOADED_IMAGE_PROTOCOL *ImageInfo        = NULL;
+        UINTN                      ExitDataSize     = 0;
+        CHAR16                    *ExitData         = NULL;
+
+        // Check for custom cmdline.txt (supports UTF-8 / ASCII and UTF-16 LE)
+        if (FileExistsOnHandle (Handles[Index], L"cmdline.txt") || FileExistsOnHandle (Handles[Index], L"boot\\cmdline.txt")) {
+          CHAR16 *CmdFileName = FileExistsOnHandle (Handles[Index], L"cmdline.txt") ? L"cmdline.txt" : L"boot\\cmdline.txt";
+          Status = LoadFileToBufferChunked (Handles[Index], CmdFileName, &CmdLineBuf, &CmdLineSize);
+          if (!EFI_ERROR (Status) && (CmdLineBuf != NULL) && (CmdLineSize > 0)) {
+            UINT8 *RawBytes = (UINT8 *)CmdLineBuf;
+
+            if ((CmdLineSize >= 2) && (RawBytes[0] == 0xFF) && (RawBytes[1] == 0xFE)) {
+              CHAR16 *U16Str = (CHAR16 *)(RawBytes + 2);
+              UINTN   U16Len = (CmdLineSize - 2) / sizeof (CHAR16);
+
+              while ((U16Len > 0) &&
+                     ((U16Str[U16Len - 1] == L'\r') ||
+                      (U16Str[U16Len - 1] == L'\n') ||
+                      (U16Str[U16Len - 1] == L' ')  ||
+                      (U16Str[U16Len - 1] == L'\t') ||
+                      (U16Str[U16Len - 1] == L'\0'))) {
+                U16Len--;
+              }
+
+              if (U16Len > 0) {
+                AllocatedCmdLine = AllocateZeroPool ((U16Len + 1) * sizeof (CHAR16));
+                if (AllocatedCmdLine != NULL) {
+                  CopyMem (AllocatedCmdLine, U16Str, U16Len * sizeof (CHAR16));
+                  AllocatedCmdLine[U16Len] = L'\0';
+                  FinalCmdLine = AllocatedCmdLine;
+                  DEBUG ((DEBUG_WARN, "[BDS] Loaded custom UTF-16 cmdline from %s: %s\n", CmdFileName, FinalCmdLine));
+                }
+              }
+            } else {
+              CHAR8 *AsciiCmd = (CHAR8 *)RawBytes;
+              while ((CmdLineSize > 0) &&
+                     ((AsciiCmd[CmdLineSize - 1] == '\r') ||
+                      (AsciiCmd[CmdLineSize - 1] == '\n') ||
+                      (AsciiCmd[CmdLineSize - 1] == ' ')  ||
+                      (AsciiCmd[CmdLineSize - 1] == '\t') ||
+                      (AsciiCmd[CmdLineSize - 1] == '\0'))) {
+                CmdLineSize--;
+              }
+
+              if (CmdLineSize > 0) {
+                AllocatedCmdLine = AllocateZeroPool ((CmdLineSize + 1) * sizeof (CHAR16));
+                if (AllocatedCmdLine != NULL) {
+                  for (UINTN i = 0; i < CmdLineSize; i++) {
+                    AllocatedCmdLine[i] = (CHAR16)(UINT8)AsciiCmd[i];
+                  }
+                  AllocatedCmdLine[CmdLineSize] = L'\0';
+                  FinalCmdLine = AllocatedCmdLine;
+                  DEBUG ((DEBUG_WARN, "[BDS] Loaded custom ASCII cmdline from %s: %s\n", CmdFileName, FinalCmdLine));
+                }
+              }
+            }
+          }
+        }
+
+        if (AllocatedCmdLine == NULL) {
+          DEBUG ((DEBUG_WARN, "[BDS] Using default Linux cmdline: %s\n", FinalCmdLine));
+        }
 
         DEBUG ((DEBUG_WARN, "[BDS] Found \\%s! Starting safe chunked load...\n", KernelFile));
         Status = LoadFileToBufferChunked (Handles[Index], KernelFile, &KernelBuffer, &KernelSize);
@@ -981,8 +1039,8 @@ SelectAndBootDevice (
           if (!EFI_ERROR (Status) && (EntryImage != NULL)) {
             Status = gBS->HandleProtocol (EntryImage, &gEfiLoadedImageProtocolGuid, (VOID **)&ImageInfo);
             if (!EFI_ERROR (Status) && (ImageInfo != NULL)) {
-              ImageInfo->LoadOptions     = (VOID *)LinuxCmdLine;
-              ImageInfo->LoadOptionsSize = (UINT32)StrSize (LinuxCmdLine);
+              ImageInfo->LoadOptions     = (VOID *)FinalCmdLine;
+              ImageInfo->LoadOptionsSize = (UINT32)StrSize (FinalCmdLine);
               DEBUG ((DEBUG_WARN, "[BDS] Set LoadOptions (%u bytes)\n", ImageInfo->LoadOptionsSize));
             }
 
@@ -1011,6 +1069,16 @@ SelectAndBootDevice (
             gBS->FreePages ((EFI_PHYSICAL_ADDRESS)(UINTN)mBdsInitrdBuffer, EFI_SIZE_TO_PAGES (mBdsInitrdSize));
             mBdsInitrdBuffer = NULL;
             mBdsInitrdSize   = 0;
+          }
+
+          if (AllocatedCmdLine != NULL) {
+            FreePool (AllocatedCmdLine);
+            AllocatedCmdLine = NULL;
+          }
+          if (CmdLineBuf != NULL) {
+            gBS->FreePages ((EFI_PHYSICAL_ADDRESS)(UINTN)CmdLineBuf, EFI_SIZE_TO_PAGES (CmdLineSize));
+            CmdLineBuf = NULL;
+            CmdLineSize = 0;
           }
 
           if (BootPath != NULL) {
