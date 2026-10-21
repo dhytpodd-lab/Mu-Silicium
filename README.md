@@ -10,7 +10,7 @@ This Project focuses on Making ARM-Based Devices Boot Operating Systems like Win
 
 - [Status](Status.md)
 - [Building](Building.md)
-- [Guides](https://github.com/Project-Silicium/Guides/blob/main/README.md)
+- [Guides](https://github.com/dhytpodd-lab/Guides/blob/main/README.md)
 - [Discord Server](https://discord.gg/Dx2QgMx7Sv)
 
 ## Frequently asked Questions
