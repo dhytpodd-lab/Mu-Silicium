@@ -28,5 +28,8 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: uefi-images
-          path: ./Mu-*
+          path: |
+            ./Mu-*
+            ./Build/*/RELEASE_CLANGPDB/FV/SILICIUM_UEFI.fd
+            ./Build/*/DEBUG_CLANGPDB/FV/SILICIUM_UEFI.fd
           compression-level: 9

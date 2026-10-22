@@ -28,6 +28,31 @@ _CopyLoop:
   stp   x2, x3, [x5], #16
   subs  x6, x6, #16
   b.ne  _CopyLoop
+
+#ifndef PAYLOAD_BASE
+#define PAYLOAD_BASE 0xF0000000
+#endif
+
+#ifdef PAYLOAD_BASE
+  /* x4 now points just past the FD: an optional "XNUP" payload may follow */
+  ldr   w2, [x4]
+  movz  w3, #0x4E58
+  movk  w3, #0x5055, lsl #16
+  cmp   w2, w3
+  b.ne  _NoPayload
+  ldr   w6, [x4, #4]    /* Payload Size */
+  add   x6, x6, #23     /* Header + Round Up to 16 */
+  and   x6, x6, #~15
+  movz  x5, #(PAYLOAD_BASE >> 16), lsl #16
+
+_PayloadLoop:
+  ldp   x2, x3, [x4], #16
+  stp   x2, x3, [x5], #16
+  subs  x6, x6, #16
+  b.ne  _PayloadLoop
+
+_NoPayload:
+#endif
   ldr   x5, =FD_BASE
 
 _Entry:

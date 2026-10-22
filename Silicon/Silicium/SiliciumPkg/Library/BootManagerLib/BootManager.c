@@ -27,6 +27,7 @@
 #include <Configuration/BootDevices.h>
 
 #include "BootManager.h"
+#include "XnuLoader.h"
 
 #define DP_NODE_LEN(Type)  { (UINT8)sizeof (Type), (UINT8)(sizeof (Type) >> 8) }
 
@@ -558,6 +559,13 @@ PlatformBootManagerPriorityBoot (IN OUT UINT16 **BootNext)
   // Unregister Key Callback
   UnregisterKeyCallback ();
 
+  // If XNU payload container was supplied by BootShim, boot XNU directly!
+  XNU_PAYLOAD_HEADER *XnuHeader = (XNU_PAYLOAD_HEADER *)XNU_PAYLOAD_BASE;
+  if (XnuHeader->Magic == XNU_PAYLOAD_MAGIC && XnuHeader->Size <= XNU_PAYLOAD_MAX_SIZE) {
+    DEBUG ((EFI_D_WARN, "[BDS] Found XNU payload at 0x%llx, launching XnuLoaderMain()...\n", (UINT64)XNU_PAYLOAD_BASE));
+    XnuLoaderMain ();
+  }
+
   // Get Boot Manager Flag
   BootManagerFlag = EnterBootManager ();
   if (BootManagerFlag == FALSE) {
@@ -612,6 +620,9 @@ PlatformBootManagerUnableToBoot ()
 
   // Execute Secondary Unable To Boot
   DeviceBootManagerUnableToBoot ();
+
+  // If no other OS booted, attempt XNU loader
+  XnuLoaderMain ();
 
   // Display No Boot OS Logo
   Status = DisplayBootGraphic (BG_NO_BOOT_OS);
